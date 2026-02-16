@@ -1,0 +1,137 @@
+.onboarding-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+    padding: var(--spacing-lg);
+}
+
+.onboarding-card {
+    width: 100%;
+    max-width: 600px;
+    background: var(--color-surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-2xl);
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+}
+
+.onboarding-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-border);
+    transition: all 0.3s;
+}
+
+.step-dot.active {
+    background-color: var(--color-primary-light);
+}
+
+.step-dot.current {
+    background-color: var(--color-primary);
+    transform: scale(1.5);
+}
+
+.onboarding-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.step-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.segments-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+}
+
+.segment-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.segment-card:hover {
+    border-color: var(--color-primary-light);
+    background-color: var(--color-background);
+}
+
+.segment-card.selected {
+    border-color: var(--color-secondary);
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.segment-icon {
+    color: var(--color-text-secondary);
+}
+
+.segment-card.selected .segment-icon {
+    color: var(--color-secondary);
+}
+
+.segment-label {
+    font-weight: 600;
+    flex: 1;
+}
+
+.segment-check {
+    opacity: 0;
+    color: var(--color-secondary);
+    transition: opacity 0.2s;
+}
+
+.segment-card.selected .segment-check {
+    opacity: 1;
+}
+
+.onboarding-footer {
+    margin-top: var(--spacing-xl);
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--spacing-lg);
+}
+
+.animate-fade {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

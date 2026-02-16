@@ -1,0 +1,270 @@
+.status-badge-lg {
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+}
+
+.status-badge-lg[data-type="success"] {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1px solid var(--color-success);
+}
+
+.status-badge-lg[data-type="warning"] {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning);
+}
+
+.status-badge-lg[data-type="danger"] {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger);
+}
+
+.ops-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.ops-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.ops-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ops-icon.primary {
+    background: rgba(15, 23, 42, 0.1);
+    color: var(--color-primary);
+}
+
+.ops-icon.warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.ops-icon.danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.ops-icon.secondary {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-secondary);
+}
+
+.ops-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.ops-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.ops-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.ops-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-xl);
+}
+
+.flow-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flow-visual {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    position: relative;
+}
+
+/* Connectors line behind stages? Simplified to just arrows for now */
+
+.flow-stage {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.flow-stage:hover {
+    transform: translateX(4px);
+    border-color: var(--color-primary-light);
+}
+
+.flow-stage.bottleneck {
+    border-left: 4px solid var(--color-danger);
+    background: #FFF1F2;
+    /* Very light red */
+}
+
+.stage-info {
+    flex: 1;
+    min-width: 180px;
+}
+
+.stage-name {
+    display: block;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+}
+
+.stage-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stage-bar-container {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stage-metrics {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.sla-tag {
+    color: var(--color-text-secondary);
+}
+
+.load-tag {
+    color: var(--color-text-secondary);
+}
+
+.load-tag.overload {
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.stage-progress {
+    height: 8px;
+    background: var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.progress-fill {
+    height: 100%;
+}
+
+.progress-fill.primary {
+    background: var(--color-secondary);
+}
+
+.progress-fill.danger {
+    background: var(--color-danger);
+}
+
+.flow-arrow {
+    position: absolute;
+    left: 50%;
+    bottom: -20px;
+    transform: translateX(-50%) rotate(90deg);
+    color: var(--color-border);
+    z-index: 0;
+    /* Hidden in vertical list for simplicity, or styled differently */
+    display: none;
+}
+
+/* Adjust for vertical stacking visual */
+.flow-visual {
+    gap: var(--spacing-md);
+}
+
+.ops-diag {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+}
+
+.diag-block {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.diag-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.diag-sub {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-secondary);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.diag-list {
+    list-style: none;
+}
+
+.diag-list li {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    margin-bottom: var(--spacing-sm);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 1024px) {
+    .ops-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ops-layout {
+        grid-template-columns: 1fr;
+    }
+}

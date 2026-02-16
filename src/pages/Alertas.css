@@ -1,0 +1,240 @@
+.alerts-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.feed-item {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.feed-icon-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 2;
+    background-color: var(--color-surface);
+    border: 2px solid var(--color-border);
+}
+
+.icon-box.danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+    background-color: var(--color-danger-bg);
+}
+
+.icon-box.warning {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+    background-color: var(--color-warning-bg);
+}
+
+.icon-box.info {
+    border-color: var(--color-secondary);
+    color: var(--color-secondary);
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.connector-line {
+    width: 2px;
+    flex: 1;
+    background-color: var(--color-border);
+    margin-top: 4px;
+    margin-bottom: -24px;
+    /* Connect to next item */
+}
+
+.feed-item:last-child .connector-line {
+    display: none;
+}
+
+.feed-content {
+    flex: 1;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+}
+
+.feed-content:hover {
+    transform: translateX(4px);
+    border-color: var(--color-primary-light);
+}
+
+.feed-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.feed-date {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.priority-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-badge.high {
+    color: var(--color-danger);
+}
+
+.priority-badge.medium {
+    color: var(--color-warning);
+}
+
+.priority-badge.low {
+    color: var(--color-text-secondary);
+}
+
+.feed-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+}
+
+.feed-msg {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-md);
+}
+
+.feed-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--spacing-sm);
+}
+
+.btn-action {
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+
+.btn-action:hover {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+}
+
+.btn-action.primary {
+    color: var(--color-secondary);
+    font-weight: 500;
+}
+
+.risk-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.risk-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.risk-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+.risk-bar {
+    height: 6px;
+    background-color: var(--color-background);
+    border-radius: 3px;
+    width: 100%;
+}
+
+.risk-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.risk-fill.danger {
+    background-color: var(--color-danger);
+}
+
+.risk-fill.warning {
+    background-color: var(--color-warning);
+}
+
+.risk-fill.success {
+    background-color: var(--color-success);
+}
+
+.insight-box {
+    background-color: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+}
+
+.insight-title {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-secondary);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.insight-text {
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+    font-style: italic;
+}
+
+@media (max-width: 1024px) {
+    .alerts-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .alerts-sidebar {
+        order: -1;
+    }
+}

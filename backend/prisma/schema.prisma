@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin") // admin, manager, viewer
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company? @relation(fields: [companyId], references: [id])
+  companyId String?
+
+  assignedItems OperatingItem[]
+  alerts        Alert[]
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String?
+  segment   String?
+  size      String?  // micro, small, medium, large
+  revenue   Float?
+  headcount Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  clients        Client[]
+  flows          OperatingFlow[]
+  processBlocks  ProcessBlock[]
+  kpis           KPI[]
+  financialEntries FinancialEntry[]
+  people         Person[]
+  alerts         Alert[]
+}
+
+model Client {
+  id         String   @id @default(uuid())
+  name       String
+  type       String   @default("PJ") // PF, PJ
+  email      String?
+  phone      String?
+  segment    String?
+  status     String   @default("active") // active, inactive, prospect
+  totalValue Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+
+  items OperatingItem[]
+}
+
+model OperatingFlow {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // sales, service, project, financial
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+
+  stages FlowStage[]
+  items  OperatingItem[]
+}
+
+model FlowStage {
+  id    String @id @default(uuid())
+  name  String
+  order Int
+  sla   Int    @default(24) // hours
+  type  String @default("process") // start, process, end_success, end_fail
+
+  flow   OperatingFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  flowId String
+
+  items OperatingItem[]
+}
+
+model OperatingItem {
+  id        String    @id @default(uuid())
+  title     String
+  type      String    // lead, deal, order, project, ticket, task
+  value     Float?
+  priority  String    @default("medium") // low, medium, high, critical
+  status    String    @default("active") // active, paused, completed, canceled
+  slaDueAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  flow   OperatingFlow @relation(fields: [flowId], references: [id])
+  flowId String
+
+  stage   FlowStage @relation(fields: [stageId], references: [id])
+  stageId String
+
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String?
+
+  responsible   User?   @relation(fields: [responsibleId], references: [id])
+  responsibleId String?
+
+  history ItemHistory[]
+}
+
+model ItemHistory {
+  id        String   @id @default(uuid())
+  action    String   // created, moved, updated, completed
+  fromStage String?
+  toStage   String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  item   OperatingItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId String
+}
+
+model ProcessBlock {
+  id    String @id @default(uuid())
+  name  String
+  type  String // direction, finance, admin, people, ops, governance
+  order Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+
+  processes ProcessItem[]
+}
+
+model ProcessItem {
+  id          String  @id @default(uuid())
+  code        String
+  name        String
+  status      String  @default("none") // none, informal, formal
+  responsible Boolean @default(false)
+  frequency   String  @default("never") // never, eventual, periodic
+  observation String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  block   ProcessBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  blockId String
+}
+
+model KPI {
+  id       String @id @default(uuid())
+  name     String
+  category String // Financeiro, Pessoas, Cliente, Operacional
+  value    Float
+  target   Float
+  unit     String // %, R$, qty, score
+  trend    String? // up, down, stable
+  status   String  @default("success") // success, warning, danger
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+}
+
+model FinancialEntry {
+  id          String   @id @default(uuid())
+  type        String   // revenue, cost, investment
+  category    String
+  description String
+  value       Float
+  date        DateTime
+  recurring   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+}
+
+model Person {
+  id         String   @id @default(uuid())
+  name       String
+  role       String
+  department String
+  hireDate   DateTime
+  status     String   @default("active") // active, inactive, vacation
+  salary     Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+}
+
+model Alert {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  type        String    // financial, operational, people, strategic
+  priority    String    @default("medium") // low, medium, high, critical
+  status      String    @default("active") // active, resolved, dismissed
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+}

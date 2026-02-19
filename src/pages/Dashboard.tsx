@@ -130,32 +130,31 @@ const Dashboard = () => {
                             <div className="card-header">
                                 <h3 className="text-h3">Ações Prioritárias</h3>
                             </div>
-                            <ul className="action-list">
-                                <li className="action-item">
-                                    <div className="action-icon warning"><AlertTriangle size={16} /></div>
-                                    <div className="action-info">
-                                        <span className="action-text">Revisar contratos de fornecedores</span>
-                                        <span className="action-meta">Financeiro • Vence em 2 dias</span>
-                                    </div>
-                                    <button className="btn-icon-sm"><ArrowRight size={14} /></button>
-                                </li>
-                                <li className="action-item">
-                                    <div className="action-icon primary"><Users size={16} /></div>
-                                    <div className="action-info">
-                                        <span className="action-text">Aprovar contratação de Dev Jr</span>
-                                        <span className="action-meta">Pessoas • Pendente</span>
-                                    </div>
-                                    <button className="btn-icon-sm"><ArrowRight size={14} /></button>
-                                </li>
-                                <li className="action-item">
-                                    <div className="action-icon success"><CheckCircle size={16} /></div>
-                                    <div className="action-info">
-                                        <span className="action-text">Reunião de alinhamento trimestral</span>
-                                        <span className="action-meta">Estratégia • Agendada</span>
-                                    </div>
-                                    <button className="btn-icon-sm"><ArrowRight size={14} /></button>
-                                </li>
-                            </ul>
+                            {(!data.actions || data.actions.length === 0) ? (
+                                <p className="text-muted text-sm p-4">Nenhuma ação prioritária no momento.</p>
+                            ) : (
+                                <ul className="action-list">
+                                    {data.actions.map((action: any, index: number) => (
+                                        <li key={index} className="action-item">
+                                            <div className={`action-icon ${action.priority === 'critical' ? 'danger' : action.priority === 'high' ? 'warning' : 'primary'}`}>
+                                                {action.type === 'financial' ? <DollarSign size={16} /> :
+                                                    action.type === 'people' ? <Users size={16} /> :
+                                                        action.type === 'alert' ? <AlertTriangle size={16} /> :
+                                                            <Activity size={16} />}
+                                            </div>
+                                            <div className="action-info">
+                                                <span className="action-text">{action.text}</span>
+                                                <span className="action-meta">{action.meta}</span>
+                                            </div>
+                                            {action.link && (
+                                                <Link to={action.link} className="btn-icon-sm">
+                                                    <ArrowRight size={14} />
+                                                </Link>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
 
                         <div className="card">

@@ -13,39 +13,44 @@ router.get('/', async (req: AuthRequest, res) => {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        // Financial Summary
+        // 1. Financial Summary
         const financialEntries = await prisma.financialEntry.findMany({
             where: { companyId, date: { gte: startOfMonth, lte: endOfMonth } },
         });
-        const revenue = financialEntries.filter(e => e.type === 'revenue').reduce((s, e) => s + e.value, 0);
-        const costs = financialEntries.filter(e => e.type === 'cost').reduce((s, e) => s + e.value, 0);
-        const margin = revenue > 0 ? Math.round(((revenue - costs) / revenue) * 100) : 0;
+        const revenue = financialEntries.filter(e => e.type === 'revenue' || e.type === 'INCOME').reduce((s, e) => s + Number(e.value || e.amount || 0), 0);
+        const costs = financialEntries.filter(e => e.type === 'cost' || e.type === 'EXPENSE').reduce((s, e) => s + Number(e.value || e.amount || 0), 0);
+        const margin = revenue > 0 ? ((revenue - costs) / revenue) * 100 : 0;
 
-        // All-time cash
+        // All-time cash (Runway)
         const allFinancial = await prisma.financialEntry.findMany({ where: { companyId } });
-        const totalRev = allFinancial.filter(e => e.type === 'revenue').reduce((s, e) => s + e.value, 0);
-        const totalCost = allFinancial.filter(e => e.type === 'cost').reduce((s, e) => s + e.value, 0);
+        const totalRev = allFinancial.filter(e => e.type === 'revenue' || e.type === 'INCOME').reduce((s, e) => s + Number(e.value || e.amount || 0), 0);
+        const totalCost = allFinancial.filter(e => e.type === 'cost' || e.type === 'EXPENSE').reduce((s, e) => s + Number(e.value || e.amount || 0), 0);
         const cashAvailable = totalRev - totalCost;
+        const averageMonthlyCost = totalCost / (await prisma.financialEntry.findMany({ where: { companyId, type: { in: ['cost', 'EXPENSE'] } } }).then(r => Math.max(1, new Set(r.map(e => e.date.getMonth())).size)) || 1);
+        const operatingMonths = averageMonthlyCost > 0 ? Math.floor(cashAvailable / averageMonthlyCost) : 0;
 
-        // People Summary
-        const people = await prisma.person.findMany({ where: { companyId } });
-        const headcount = people.filter(p => p.status === 'active').length;
+        // 2. People Summary (KPIs)
+        const people = await prisma.person.findMany({ where: { companyId, status: 'active' } });
+        const headcount = people.length;
 
-        // Pipeline value
+        const kpis = await prisma.kPI.findMany({ where: { companyId } });
+        const turnoverKpi = kpis.find(k => k.name.includes('Turnover') || k.category === 'Pessoas');
+        const climateKpi = kpis.find(k => k.name.includes('Satisfação') || k.name.includes('Clima') || k.name.includes('eNPS'));
+
+        const peopleData = {
+            headcount,
+            turnover: turnoverKpi ? turnoverKpi.value : 0,
+            climateScore: climateKpi ? (climateKpi.unit === 'score' ? climateKpi.value / 20 : climateKpi.value) : 4.0, // Normalize to 5.0 scale if needed
+        };
+
+        // 3. Pipeline value
         const items = await prisma.operatingItem.findMany({
             where: { flow: { companyId }, status: 'active' },
         });
-        const pipelineValue = items.reduce((s, i) => s + (i.value || 0), 0);
+        const pipelineValue = items.reduce((s, i) => s + Number(i.value || 0), 0);
         const activeItems = items.length;
 
-        // Active alerts
-        const alerts = await prisma.alert.findMany({
-            where: { companyId, status: 'active' },
-            orderBy: { createdAt: 'desc' },
-            take: 5,
-        });
-
-        // Process maturity
+        // 4. Process maturity
         const processBlocks = await prisma.processBlock.findMany({
             where: { companyId },
             include: { processes: true },
@@ -69,23 +74,94 @@ router.get('/', async (req: AuthRequest, res) => {
             overallProcessScore = Math.round(blockScores.reduce((s, v) => s + v, 0) / blockScores.length);
         }
 
-        // Operations metrics
-        const flows = await prisma.operatingFlow.findMany({
-            where: { companyId },
-            include: {
-                stages: { orderBy: { order: 'asc' } },
-                items: { where: { status: 'active' } },
-            },
-        });
-
-        // Calculate SGE Score (weighted)
-        const financialScore = Math.min(100, margin * 2 + (revenue > 0 ? 30 : 0));
-        const peopleScore = headcount > 0 ? 75 : 0;
-        const sgeScore = Math.round((financialScore * 0.3 + peopleScore * 0.2 + overallProcessScore * 0.3 + (activeItems > 0 ? 70 : 0) * 0.2));
+        // 5. Calculate SGE Score (Weighted)
+        const financialScore = Math.max(0, Math.min(100, margin * 2 + (revenue > 0 ? 30 : 0)));
+        const peopleScore = (peopleData.climateScore / 5) * 100;
+        const sgeScore = Math.round((financialScore * 0.35 + peopleScore * 0.25 + overallProcessScore * 0.25 + (activeItems > 0 ? 80 : 0) * 0.15));
 
         let sgeStatus = 'Empresa Saudável';
         if (sgeScore < 50) sgeStatus = 'Empresa em Risco';
-        else if (sgeScore < 70) sgeStatus = 'Empresa em Transição';
+        else if (sgeScore < 75) sgeStatus = 'Empresa em Transição';
+
+        // 6. Generate Priority Actions (Dynamic)
+        const priorityActions = [];
+
+        // Financial Triggers
+        if (operatingMonths < 3) {
+            priorityActions.push({
+                type: 'financial',
+                priority: 'critical',
+                text: 'Baixo Caixa (Runway < 3 meses)',
+                meta: 'Financeiro • Urgente',
+                link: '/financeiro'
+            });
+        }
+        if (margin < 10) {
+            priorityActions.push({
+                type: 'financial',
+                priority: 'high',
+                text: 'Margem Operacional Crítica (<10%)',
+                meta: 'Financeiro • Revisar Custos',
+                link: '/financeiro'
+            });
+        }
+
+        // Operational Triggers
+        const highValueItems = items.filter(i => (i.value || 0) > 50000);
+        if (highValueItems.length > 0) {
+            priorityActions.push({
+                type: 'operational',
+                priority: 'medium',
+                text: `${highValueItems.length} oportunidades de alto valor`,
+                meta: 'Fluxos • Acompanhar',
+                link: '/fluxos'
+            });
+        }
+
+        // People Triggers
+        if (peopleData.turnover > 5) {
+            priorityActions.push({
+                type: 'people',
+                priority: 'high',
+                text: 'Turnover acima do ideal (>5%)',
+                meta: 'Pessoas • Retenção',
+                link: '/pessoas'
+            });
+        }
+
+        // Process Triggers
+        if (overallProcessScore < 50) {
+            priorityActions.push({
+                type: 'process',
+                priority: 'medium',
+                text: 'Baixa Maturidade de Processos',
+                meta: 'Processos • Padronizar',
+                link: '/processos'
+            });
+        }
+
+        // Add Manual Alerts
+        const activeAlerts = await prisma.alert.findMany({
+            where: { companyId, status: 'active' },
+            orderBy: { priority: 'desc' }, // 'critical' > 'high' > 'medium'
+            take: 3
+        });
+
+        activeAlerts.forEach(alert => {
+            priorityActions.push({
+                type: 'alert',
+                priority: alert.priority === 'critical' ? 'critical' : 'high',
+                text: alert.title,
+                meta: 'Alerta • Manual',
+                link: '/alertas'
+            });
+        });
+
+        // Flows for chart
+        const flows = await prisma.operatingFlow.findMany({
+            where: { companyId },
+            include: { items: { where: { status: 'active' } } },
+        });
 
         res.json({
             sgeScore,
@@ -93,15 +169,11 @@ router.get('/', async (req: AuthRequest, res) => {
             financial: {
                 revenue,
                 costs,
-                margin,
+                margin: Math.round(margin),
                 cashAvailable,
-                operatingMonths: costs > 0 ? Math.floor(cashAvailable / costs) : 0,
+                operatingMonths,
             },
-            people: {
-                headcount,
-                turnover: 5.2,
-                climateScore: 4.2,
-            },
+            people: peopleData,
             pipeline: {
                 value: pipelineValue,
                 activeItems,
@@ -110,13 +182,13 @@ router.get('/', async (req: AuthRequest, res) => {
                 score: overallProcessScore,
                 status: overallProcessScore >= 70 ? 'Saudável' : overallProcessScore >= 40 ? 'Transição' : 'Risco',
             },
-            alerts,
+            actions: priorityActions.slice(0, 5), // Limit to top 5
+            alerts: activeAlerts, // Backwards compatibility for sidebar
             flows: flows.map(f => ({
                 id: f.id,
                 name: f.name,
-                type: f.type,
                 activeItems: f.items.length,
-                totalValue: f.items.reduce((s, i) => s + (i.value || 0), 0),
+                totalValue: f.items.reduce((s, i) => s + Number(i.value || 0), 0),
             })),
         });
     } catch (err) {

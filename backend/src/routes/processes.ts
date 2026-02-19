@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
+import { ActionPlanService } from '../services/actionPlanService';
 
 const router = Router();
 
@@ -149,6 +150,46 @@ router.get('/diagnosis', async (req: AuthRequest, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro ao gerar diagnóstico' });
+    }
+});
+
+// GET /api/process-blocks/actions
+router.get('/actions', async (req: AuthRequest, res) => {
+    try {
+        const company = await prisma.company.findUnique({
+            where: { id: req.companyId },
+            select: { segment: true } // Fetch segment
+        });
+
+        const blocks = await prisma.processBlock.findMany({
+            where: { companyId: req.companyId },
+            include: { processes: true },
+        });
+
+        const allProcesses = blocks.flatMap(b => b.processes);
+        const segment = company?.segment;
+
+        const suggestions = allProcesses
+            .filter(p => p.status === 'none' || p.status === 'informal')
+            .map(p => {
+                const template = ActionPlanService.getTemplate(p.code, segment);
+
+                return {
+                    processId: p.id,
+                    processName: p.name,
+                    code: p.code,
+                    status: p.status,
+                    actionTitle: template.title,
+                    actionStep: template.step,
+                    suggestedTool: template.tool,
+                    priority: (p.status === 'none') ? 'High' : 'Medium'
+                };
+            });
+
+        res.json(suggestions);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao gerar plano de ação' });
     }
 });
 

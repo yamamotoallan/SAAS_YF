@@ -119,6 +119,7 @@ export const api = {
         updateItem: (id: string, data: any) =>
             request<any>(`/process-blocks/items/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         diagnosis: () => request<any>('/process-blocks/diagnosis'),
+        actions: () => request<any>('/process-blocks/actions'),
     },
 
     // ============ KPIs ============
@@ -200,6 +201,33 @@ export const api = {
             const query = params ? '?' + new URLSearchParams(params).toString() : '';
             return request<any[]>(`/logs${query}`);
         },
+    },
+
+    // ============ GOALS ============
+    goals: {
+        list: (params?: Record<string, string>) => {
+            const query = params ? '?' + new URLSearchParams(params).toString() : '';
+            return request<any[]>(`/goals${query}`);
+        },
+        create: (data: any) =>
+            request<any>('/goals', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: any) =>
+            request<any>(`/goals/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        delete: (id: string) =>
+            request<any>(`/goals/${id}`, { method: 'DELETE' }),
+        addKeyResult: (goalId: string, data: any) =>
+            request<any>(`/goals/${goalId}/key-results`, { method: 'POST', body: JSON.stringify(data) }),
+        updateKeyResult: (id: string, data: any) =>
+            request<any>(`/goals/key-results/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    },
+
+    // ============ RULES ============
+    rules: {
+        list: () => request<any[]>('/rules'),
+        create: (data: any) =>
+            request<any>('/rules', { method: 'POST', body: JSON.stringify(data) }),
+        delete: (id: string) =>
+            request<any>(`/rules/${id}`, { method: 'DELETE' }),
     },
 };
 

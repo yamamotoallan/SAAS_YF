@@ -3,6 +3,8 @@ import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { logActivity } from '../lib/log';
+import { GoalsService, METRIC_TYPES } from '../services/goalsService';
+import { RulesService } from '../services/rules';
 
 const router = Router();
 
@@ -88,6 +90,18 @@ router.post('/', async (req: AuthRequest, res) => {
         });
 
         logActivity({ action: 'created', module: 'financial', entityId: entry.id, entityName: `${description} - R$ ${value}`, details: { type, category, value }, companyId: req.companyId!, userId: req.userId });
+
+        // Sync Goals
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.FINANCIAL_REVENUE_MONTH);
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.FINANCIAL_PROFIT_MONTH);
+
+        // Evaluate Rules
+        RulesService.evaluate({
+            companyId: req.companyId!,
+            entity: 'financial',
+            data: entry
+        });
+
         res.status(201).json(entry);
     } catch (err) {
         console.error(err);
@@ -112,7 +126,22 @@ router.put('/:id', async (req: AuthRequest, res) => {
         });
 
         const updated = await prisma.financialEntry.findUnique({ where: { id: req.params.id } });
+        const updated = await prisma.financialEntry.findUnique({ where: { id: req.params.id } });
         logActivity({ action: 'updated', module: 'financial', entityId: req.params.id, entityName: before.description, details: { changes: req.body }, companyId: req.companyId!, userId: req.userId });
+
+        // Sync Goals
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.FINANCIAL_REVENUE_MONTH);
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.FINANCIAL_PROFIT_MONTH);
+
+        // Evaluate Rules
+        if (updated) {
+            RulesService.evaluate({
+                companyId: req.companyId!,
+                entity: 'financial',
+                data: updated
+            });
+        }
+
         res.json(updated);
     } catch (err) {
         console.error(err);
@@ -127,6 +156,11 @@ router.delete('/:id', async (req: AuthRequest, res) => {
         await prisma.financialEntry.deleteMany({ where: { id: req.params.id, companyId: req.companyId } });
 
         logActivity({ action: 'deleted', module: 'financial', entityId: req.params.id, entityName: entry?.description || req.params.id, companyId: req.companyId!, userId: req.userId });
+
+        // Sync Goals
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.FINANCIAL_REVENUE_MONTH);
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.FINANCIAL_PROFIT_MONTH);
+
         res.json({ message: 'Lançamento removido' });
     } catch (err) {
         console.error(err);

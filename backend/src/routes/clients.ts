@@ -3,6 +3,7 @@ import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { logActivity } from '../lib/log';
+import { GoalsService, METRIC_TYPES } from '../services/goalsService';
 
 const router = Router();
 
@@ -71,6 +72,9 @@ router.post('/', async (req: AuthRequest, res) => {
         });
 
         logActivity({ action: 'created', module: 'client', entityId: client.id, entityName: client.name, companyId: req.companyId!, userId: req.userId });
+
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.ACTIVE_CLIENTS_COUNT);
+
         res.status(201).json(client);
     } catch (err) {
         console.error(err);
@@ -88,6 +92,9 @@ router.put('/:id', async (req: AuthRequest, res) => {
         const updated = await prisma.client.findUnique({ where: { id: req.params.id } });
 
         logActivity({ action: 'updated', module: 'client', entityId: req.params.id, entityName: before.name, details: { changes: req.body }, companyId: req.companyId!, userId: req.userId });
+
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.ACTIVE_CLIENTS_COUNT);
+
         res.json(updated);
     } catch (err) {
         console.error(err);
@@ -102,6 +109,9 @@ router.delete('/:id', async (req: AuthRequest, res) => {
         await prisma.client.deleteMany({ where: { id: req.params.id, companyId: req.companyId } });
 
         logActivity({ action: 'deleted', module: 'client', entityId: req.params.id, entityName: client?.name || req.params.id, companyId: req.companyId!, userId: req.userId });
+
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.ACTIVE_CLIENTS_COUNT);
+
         res.json({ message: 'Cliente removido' });
     } catch (err) {
         console.error(err);

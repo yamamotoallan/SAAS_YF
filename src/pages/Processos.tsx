@@ -4,20 +4,35 @@ import {
     ChevronUp,
     BrainCircuit,
     Target,
-    ShieldAlert
+    ShieldAlert,
+    Lightbulb
 } from 'lucide-react';
 import { api } from '../services/api';
 import './Processos.css';
+import ActionPlanModal from '../components/Processes/ActionPlanModal';
 
 const Processos = () => {
     const [blocks, setBlocks] = useState<any[]>([]);
     const [diagnosis, setDiagnosis] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [expandedBlocks, setExpandedBlocks] = useState<string[]>([]);
+    const [showActionsModal, setShowActionsModal] = useState(false);
+    const [actionSuggestions, setActionSuggestions] = useState<any[]>([]);
 
     useEffect(() => {
         loadData();
     }, []);
+
+    const handleOpenActions = async () => {
+        try {
+            const actions = await api.processes.actions();
+            setActionSuggestions(actions);
+            setShowActionsModal(true);
+        } catch (error) {
+            console.error('Failed to load actions', error);
+            alert('Erro ao carregar plano de ação');
+        }
+    };
 
     const loadData = async () => {
         try {
@@ -201,6 +216,16 @@ const Processos = () => {
                             </div>
                         </div>
 
+                        <div className="p-4">
+                            <button
+                                className="btn btn-primary w-full flex items-center justify-center gap-2"
+                                onClick={handleOpenActions}
+                            >
+                                <Lightbulb size={18} />
+                                Ver Plano de Ação
+                            </button>
+                        </div>
+
                         <div className="diagnosis-section">
                             <h4 className="diag-subtitle"><ShieldAlert size={16} /> Vulnerabilidades Críticas</h4>
                             {diagnosis?.criticalRisks && diagnosis.criticalRisks.length > 0 ? (
@@ -235,6 +260,13 @@ const Processos = () => {
                     </div>
                 </aside>
             </div>
+
+            {showActionsModal && (
+                <ActionPlanModal
+                    actions={actionSuggestions}
+                    onClose={() => setShowActionsModal(false)}
+                />
+            )}
         </div>
     );
 };

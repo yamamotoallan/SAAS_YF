@@ -1,0 +1,303 @@
+.goals-container {
+    padding-bottom: 4rem;
+}
+
+/* Tab bar */
+.okr-tab-bar {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0;
+}
+
+.okr-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+}
+
+.okr-tab:hover {
+    color: var(--text-primary);
+}
+
+.okr-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.okr-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--primary);
+    color: white;
+    border-radius: 999px;
+}
+
+/* Goals grid */
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 1.25rem;
+}
+
+/* Goal card */
+.goal-card {
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    padding: 1.25rem;
+}
+
+.goal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.goal-card.status-active {
+    border-left-color: var(--primary);
+}
+
+.goal-card.status-draft {
+    border-left-color: var(--text-muted);
+}
+
+.goal-card.status-archived {
+    border-left-color: var(--text-light);
+    opacity: 0.75;
+}
+
+.goal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.goal-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.goal-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+/* Goal body: ring + info side by side */
+.goal-body {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.goal-progress-ring {
+    flex-shrink: 0;
+}
+
+.progress-ring {
+    display: block;
+}
+
+.goal-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.goal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 0.25rem;
+}
+
+.goal-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* KR Section */
+.kr-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.75rem;
+}
+
+.kr-section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.kr-count {
+    background: var(--bg-secondary);
+    border-radius: 999px;
+    padding: 0 6px;
+    font-size: 0.65rem;
+}
+
+.kr-row {
+    margin-bottom: 0.6rem;
+}
+
+.kr-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.82rem;
+}
+
+.kr-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.kr-values {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.kr-value-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 700;
+    font-family: monospace;
+    font-size: 0.82rem;
+    background: var(--bg-secondary);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 1px 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-primary);
+}
+
+.kr-value-btn:not(:disabled):hover {
+    border-color: var(--primary);
+    background: var(--primary-light, rgba(99, 102, 241, 0.08));
+}
+
+.kr-value-btn.auto {
+    cursor: default;
+    color: var(--text-muted);
+}
+
+.kr-value-btn:disabled {
+    cursor: default;
+}
+
+.kr-edit-icon {
+    opacity: 0.4;
+}
+
+.kr-target {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: monospace;
+}
+
+.kr-pct {
+    font-size: 0.78rem;
+    font-weight: 700;
+    min-width: 32px;
+    text-align: right;
+}
+
+.kr-bar-track {
+    height: 5px;
+    background: var(--bg-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.kr-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* Inline edit */
+.kr-edit-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.kr-edit-input {
+    width: 80px;
+    font-size: 0.82rem;
+    padding: 2px 6px;
+    border: 1px solid var(--primary);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: monospace;
+}
+
+.btn-xs {
+    padding: 2px 7px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+}
+
+/* KR form row in modal */
+.kr-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+/* Empty state */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.empty-state h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}

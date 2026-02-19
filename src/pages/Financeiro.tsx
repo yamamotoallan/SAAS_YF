@@ -11,6 +11,7 @@ import {
     Edit2
 } from 'lucide-react';
 import { api } from '../services/api';
+import { downloadCSV } from '../utils/csvUtils';
 import Modal from '../components/Modal/Modal';
 import './Financeiro.css';
 
@@ -122,16 +123,17 @@ const Financeiro = () => {
     };
 
     const exportCSV = () => {
-        const headers = "Data,Tipo,Categoria,Descrição,Valor\n";
-        const csv = entries.map(e =>
-            `${new Date(e.date).toLocaleDateString()},${e.type},${e.category},"${e.description}",${e.amount}`
-        ).join("\n");
-        const blob = new Blob([headers + csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `financeiro_${period}.csv`;
-        a.click();
+        downloadCSV(
+            entries,
+            [
+                { key: 'date', label: 'Data', format: v => new Date(v).toLocaleDateString('pt-BR') },
+                { key: 'type', label: 'Tipo', format: v => v === 'revenue' || v === 'INCOME' ? 'Receita' : 'Despesa' },
+                { key: 'category', label: 'Categoria' },
+                { key: 'description', label: 'Descrição' },
+                { key: 'value', label: 'Valor (R$)', format: v => Number(v || 0).toFixed(2).replace('.', ',') },
+            ],
+            `financeiro_${period}`
+        );
     };
 
     if (loading) return <div className="p-8 text-center">Carregando dados financeiros...</div>;

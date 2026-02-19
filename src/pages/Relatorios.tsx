@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { User, DollarSign, Activity, Printer, Smartphone, Target } from 'lucide-react';
 import { api } from '../services/api';
 import './Relatorios.css';
+import StaticCashFlowChart from '../components/Dashboard/StaticCashFlowChart';
 
 const Relatorios = () => {
     const [month, setMonth] = useState(new Date().getMonth() + 1);
@@ -13,17 +14,18 @@ const Relatorios = () => {
         setGenerating(true);
         try {
             // Fetch consolidated data (Parallel requests)
-            const [dashboard, financial, people, operations] = await Promise.all([
+            const [dashboard, financial, people, operations, actions] = await Promise.all([
                 api.dashboard.get(),
                 api.financial.summary(), // We would filter by date here in real app
                 api.people.summary(),
-                api.operations.metrics()
+                api.operations.metrics(),
+                api.processes.actions()
             ]);
 
             setReportData({
                 month,
                 year,
-                dashboard,
+                dashboard: { ...dashboard, actions }, // Inject actions into dashboard data structure for report
                 financial,
                 people,
                 operations,
@@ -148,13 +150,13 @@ const Relatorios = () => {
 
                             <h4 className="font-bold mb-4 mt-8">Planos de Ação Prioritários</h4>
                             <div className="space-y-3">
-                                {reportData.dashboard.actions.length > 0 ? (
+                                {reportData.dashboard.actions && reportData.dashboard.actions.length > 0 ? (
                                     reportData.dashboard.actions.slice(0, 3).map((action: any, i: number) => (
                                         <div key={i} className="flex items-center gap-4 p-3 border rounded-md">
-                                            <div className={`w-2 h-12 rounded-full ${action.priority === 'critical' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
+                                            <div className={`w-2 h-12 rounded-full ${action.priority === 'High' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
                                             <div>
-                                                <div className="font-bold">{action.text}</div>
-                                                <div className="text-xs text-muted">{action.meta.toUpperCase()}</div>
+                                                <div className="font-bold">{action.actionTitle}</div>
+                                                <div className="text-xs text-muted">{action.processName} - {action.actionStep}</div>
                                             </div>
                                         </div>
                                     ))
@@ -205,13 +207,18 @@ const Relatorios = () => {
                                 </tbody>
                             </table>
 
-                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-8">
                                 <h4 className="font-bold text-blue-800 mb-2">Comentário do Consultor</h4>
                                 <p className="text-sm text-blue-900">
                                     {reportData.financial.operatingMonths < 3
                                         ? "ATENÇÃO: O caixa atual sustenta a operação por menos de 3 meses. Recomendamos revisão imediata de custos fixos ou antecipação de recebíveis."
                                         : "A saúde financeira está estável, com runway confortável. Momento propício para investimentos estratégicos em crescimento."}
                                 </p>
+                            </div>
+
+                            <div className="chart-container-print">
+                                <h4 className="font-bold mb-4">Evolução de Caixa (Últimos 6 Meses)</h4>
+                                <StaticCashFlowChart data={reportData.dashboard.financial?.history || []} />
                             </div>
                         </div>
 

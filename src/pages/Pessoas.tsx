@@ -8,10 +8,12 @@ import {
     Plus,
     Edit2,
     Trash2,
-    Mail
+    Mail,
+    Download
 } from 'lucide-react';
 import { api } from '../services/api';
 import Modal from '../components/Modal/Modal';
+import { downloadCSV } from '../utils/csvUtils';
 import './Pessoas.css';
 
 const Pessoas = () => {
@@ -133,6 +135,22 @@ const Pessoas = () => {
         p.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const exportCSV = () => {
+        downloadCSV(
+            filteredPeople,
+            [
+                { key: 'name', label: 'Nome' },
+                { key: 'role', label: 'Cargo' },
+                { key: 'department', label: 'Departamento' },
+                { key: 'status', label: 'Status', format: v => v === 'active' ? 'Ativo' : v === 'vacation' ? 'Férias' : 'Inativo' },
+                { key: 'hireDate', label: 'Data de Admissão', format: v => v ? new Date(v).toLocaleDateString('pt-BR') : '' },
+                { key: 'salary', label: 'Salário (R$)', format: v => v ? Number(v).toFixed(2).replace('.', ',') : '—' },
+                { key: 'email', label: 'Email' },
+            ],
+            'equipe'
+        );
+    };
+
     if (loading) return <div className="p-8 text-center">Carregando equipe...</div>;
 
     return (
@@ -142,9 +160,14 @@ const Pessoas = () => {
                     <h1 className="text-h2">Pessoas & Cultura</h1>
                     <p className="text-small">Gestão de talentos e clima organizacional</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => openModal()}>
-                    <Plus size={16} /> Adicionar Colaborador
-                </button>
+                <div className="header-actions">
+                    <button className="btn btn-secondary" onClick={exportCSV} title="Exportar colaboradores como CSV">
+                        <Download size={16} /> Exportar
+                    </button>
+                    <button className="btn btn-primary" onClick={() => openModal()}>
+                        <Plus size={16} /> Adicionar Colaborador
+                    </button>
+                </div>
             </header>
 
             {/* Metrics Row */}

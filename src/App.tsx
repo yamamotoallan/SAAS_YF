@@ -14,6 +14,7 @@ import Processos from './pages/Processos';
 import Operacao from './pages/Operacao';
 import Fluxos from './pages/Fluxos';
 import Clientes from './pages/Clientes';
+import Metas from './pages/Metas';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="operacao" element={<Operacao />} />
           <Route path="fluxos" element={<Fluxos />} />
           <Route path="clientes" element={<Clientes />} />
+          <Route path="metas" element={<Metas />} />
           <Route path="config" element={<Config />} />
         </Route>
         <Route path="/login" element={<Login />} />

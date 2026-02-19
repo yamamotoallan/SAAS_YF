@@ -17,6 +17,8 @@ import companyRoutes from './routes/company';
 import dashboardRoutes from './routes/dashboard';
 import operationsRoutes from './routes/operations';
 import logRoutes from './routes/logs';
+import goalRoutes from './routes/goals';
+import ruleRoutes from './routes/rules';
 
 const app = express();
 
@@ -61,6 +63,8 @@ app.use('/api/company', authMiddleware, companyRoutes);
 app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 app.use('/api/operations', authMiddleware, operationsRoutes);
 app.use('/api/logs', authMiddleware, logRoutes);
+app.use('/api/goals', authMiddleware, goalRoutes);
+app.use('/api/rules', authMiddleware, ruleRoutes);
 
 // Error handler
 app.use(errorHandler);

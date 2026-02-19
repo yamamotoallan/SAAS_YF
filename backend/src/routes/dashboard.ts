@@ -34,13 +34,29 @@ router.get('/', async (req: AuthRequest, res) => {
         const headcount = people.length;
 
         const kpis = await prisma.kPI.findMany({ where: { companyId } });
-        const turnoverKpi = kpis.find(k => k.name.includes('Turnover') || k.category === 'Pessoas');
-        const climateKpi = kpis.find(k => k.name.includes('Satisfação') || k.name.includes('Clima') || k.name.includes('eNPS'));
+
+        // Find specific KPIs with smarter matching
+        const turnoverKpi = kpis.find(k => k.name.toLowerCase().includes('turnover'))
+            || kpis.find(k => k.category === 'Pessoas' && k.name.toLowerCase().includes('rotatividade'));
+
+        const climateKpi = kpis.find(k => k.name.toLowerCase().includes('clima'))
+            || kpis.find(k => k.name.toLowerCase().includes('satisfação'))
+            || kpis.find(k => k.name.toLowerCase().includes('enps'));
+
+        let climateScore = 4.0; // Default
+        if (climateKpi) {
+            // Normalize to 0-5 scale
+            if (climateKpi.unit === 'percentage' || climateKpi.value > 10) {
+                climateScore = (climateKpi.value / 100) * 5;
+            } else {
+                climateScore = climateKpi.value;
+            }
+        }
 
         const peopleData = {
             headcount,
             turnover: turnoverKpi ? turnoverKpi.value : 0,
-            climateScore: climateKpi ? (climateKpi.unit === 'score' ? climateKpi.value / 20 : climateKpi.value) : 4.0, // Normalize to 5.0 scale if needed
+            climateScore: Number(climateScore.toFixed(1)),
         };
 
         // 3. Pipeline value
@@ -163,6 +179,35 @@ router.get('/', async (req: AuthRequest, res) => {
             include: { items: { where: { status: 'active' } } },
         });
 
+        // 7. Financial History (Last 6 Months)
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        const historyEntries = await prisma.financialEntry.findMany({
+            where: {
+                companyId,
+                date: { gte: sixMonthsAgo, lte: endOfMonth }
+            },
+            orderBy: { date: 'asc' }
+        });
+
+        const financialHistory = [];
+        for (let i = 0; i < 6; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+            const monthName = d.toLocaleString('pt-BR', { month: 'short' });
+            const monthEntries = historyEntries.filter(e =>
+                e.date.getMonth() === d.getMonth() && e.date.getFullYear() === d.getFullYear()
+            );
+
+            const monthRev = monthEntries.filter(e => e.type === 'revenue' || e.type === 'INCOME').reduce((s, e) => s + Number(e.value || 0), 0);
+            const monthCost = monthEntries.filter(e => e.type === 'cost' || e.type === 'EXPENSE').reduce((s, e) => s + Number(e.value || 0), 0);
+
+            financialHistory.push({
+                month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+                revenue: monthRev,
+                costs: monthCost,
+                profit: monthRev - monthCost
+            });
+        }
+
         res.json({
             sgeScore,
             sgeStatus,
@@ -172,6 +217,7 @@ router.get('/', async (req: AuthRequest, res) => {
                 margin: Math.round(margin),
                 cashAvailable,
                 operatingMonths,
+                history: financialHistory
             },
             people: peopleData,
             pipeline: {

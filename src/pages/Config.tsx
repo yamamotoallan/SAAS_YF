@@ -15,6 +15,7 @@ import {
     Save
 } from 'lucide-react';
 import { api } from '../services/api';
+import RulesConfig from '../components/Config/RulesConfig';
 import './Config.css';
 
 const MODULE_LABELS: Record<string, string> = {
@@ -40,8 +41,18 @@ const ACTION_CONFIG: Record<string, { label: string; icon: ReactNode; color: str
 };
 
 const Config = () => {
-    const [activeTab, setActiveTab] = useState<'general' | 'params' | 'logs'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'params' | 'rules' | 'logs'>('general');
     const [loading, setLoading] = useState(false);
+    const [userRole, setUserRole] = useState<string>('viewer');
+
+    useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('yf_user') || '{}');
+        setUserRole(user.role || 'viewer');
+        // If not admin and trying to access admin tabs, switch to logs or something safe
+        if (user.role !== 'admin' && activeTab !== 'logs') {
+            setActiveTab('logs');
+        }
+    }, []);
 
     // Logs State
     const [logs, setLogs] = useState<any[]>([]);
@@ -130,15 +141,24 @@ const Config = () => {
             </header>
 
             <div className="tabs mb-lg">
-                <button className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>
-                    <Building2 size={16} /> Geral & Metas
-                </button>
-                <button className={`tab-btn ${activeTab === 'params' ? 'active' : ''}`} onClick={() => setActiveTab('params')}>
-                    <Settings size={16} /> Parâmetros
-                </button>
+                {userRole === 'admin' && (
+                    <>
+                        <button className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>
+                            <Building2 size={16} /> Geral & Metas
+                        </button>
+                        <button className={`tab-btn ${activeTab === 'params' ? 'active' : ''}`} onClick={() => setActiveTab('params')}>
+                            <Settings size={16} /> Parâmetros
+                        </button>
+                    </>
+                )}
                 <button className={`tab-btn ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>
                     <Activity size={16} /> Auditoria (Logs)
                 </button>
+                {userRole === 'admin' && (
+                    <button className={`tab-btn ${activeTab === 'rules' ? 'active' : ''}`} onClick={() => setActiveTab('rules')}>
+                        <Settings size={16} /> Automação
+                    </button>
+                )}
             </div>
 
             {/* TAB: GERAL */}
@@ -266,6 +286,9 @@ const Config = () => {
                     </div>
                 </div>
             )}
+
+            {/* TAB: REGRAS */}
+            {activeTab === 'rules' && <RulesConfig />}
 
             {/* TAB: LOGS (AUDITORIA) */}
             {activeTab === 'logs' && (

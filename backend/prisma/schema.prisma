@@ -22,6 +22,7 @@ model User {
   assignedItems OperatingItem[]
   alerts        Alert[]
   activityLogs  ActivityLog[]
+  goals         Goal[]
 }
 
 model Company {
@@ -46,6 +47,8 @@ model Company {
   people         Person[]
   alerts         Alert[]
   activityLogs   ActivityLog[]
+  goals          Goal[]
+  businessRules  BusinessRule[]
 }
 
 model Client {
@@ -237,4 +240,57 @@ model ActivityLog {
 
   user      User?   @relation(fields: [userId], references: [id])
   userId    String?
+}
+
+model Goal {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  type        String   // company, department, individual
+  period      String   // e.g., "Q1 2024", "2024"
+  status      String   @default("active") // draft, active, archived
+  progress    Int      @default(0) // 0-100
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+
+  owner     User?   @relation(fields: [ownerId], references: [id])
+  ownerId   String?
+
+  keyResults KeyResult[]
+}
+
+model KeyResult {
+  id              String   @id @default(uuid())
+  title           String
+  initialValue    Float    @default(0)
+  currentValue    Float    @default(0)
+  targetValue     Float
+  unit            String   // currency, percentage, number, boolean
+  linkedIndicator String?  // e.g., "financial_revenue", "people_headcount"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  goal   Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goalId String
+}
+
+model BusinessRule {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  entity      String   // financial, process, people, operations
+  metric      String   // revenue, margin, score, etc.
+  operator    String   // >, <, ==, !=
+  value       Float
+  actionType  String   // alert, email
+  priority    String   @default("medium") // low, medium, high, critical
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
 }

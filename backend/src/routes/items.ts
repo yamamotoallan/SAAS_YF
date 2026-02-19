@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
+import { GoalsService, METRIC_TYPES } from '../services/goalsService';
 
 const router = Router();
 
@@ -107,6 +108,10 @@ router.post('/', async (req: AuthRequest, res) => {
         });
 
         res.status(201).json(item);
+
+        // Sync Metrics
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.SALES_WON_COUNT_MONTH);
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.SALES_WON_VALUE_MONTH);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro ao criar item' });
@@ -132,6 +137,10 @@ router.put('/:id', async (req: AuthRequest, res) => {
         });
 
         res.json(item);
+
+        // Sync Metrics
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.SALES_WON_COUNT_MONTH);
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.SALES_WON_VALUE_MONTH);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro ao atualizar item' });
@@ -178,6 +187,11 @@ router.patch('/:id/move', async (req: AuthRequest, res) => {
 router.delete('/:id', async (req: AuthRequest, res) => {
     try {
         await prisma.operatingItem.delete({ where: { id: req.params.id } });
+
+        // Sync Metrics
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.SALES_WON_COUNT_MONTH);
+        await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.SALES_WON_VALUE_MONTH);
+
         res.json({ message: 'Item removido' });
     } catch (err) {
         console.error(err);

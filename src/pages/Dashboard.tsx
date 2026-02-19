@@ -7,11 +7,13 @@ import {
     Activity,
     DollarSign,
     Clock,
-    Shield
+    Shield,
+    Target
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import './Dashboard.css';
+import CashFlowChart from '../components/Dashboard/CashFlowChart';
 
 const Dashboard = () => {
     const [data, setData] = useState<any>(null);
@@ -20,8 +22,11 @@ const Dashboard = () => {
     useEffect(() => {
         const loadDashboard = async () => {
             try {
-                const dashboardData = await api.dashboard.get();
-                setData(dashboardData);
+                const [dashboardData, goalsData] = await Promise.all([
+                    api.dashboard.get(),
+                    api.goals.list({ type: 'company' })
+                ]);
+                setData({ ...dashboardData, goals: goalsData });
             } catch (error) {
                 console.error('Failed to load dashboard', error);
             } finally {
@@ -110,19 +115,8 @@ const Dashboard = () => {
                             <h3 className="text-h3">Fluxo de Caixa (Previsão)</h3>
                             <div className="badge badge-neutral">Runway: ~{financial.operatingMonths} meses</div>
                         </div>
-                        <div className="chart-placeholder">
-                            <div className="flex justify-between items-end h-32 px-4 gap-2">
-                                {/* Simplified visual representation of cash flow */}
-                                <div className="bg-primary/20 w-full rounded-t" style={{ height: '40%' }}></div>
-                                <div className="bg-primary/40 w-full rounded-t" style={{ height: '55%' }}></div>
-                                <div className="bg-primary/60 w-full rounded-t" style={{ height: '45%' }}></div>
-                                <div className="bg-primary/80 w-full rounded-t" style={{ height: '70%' }}></div>
-                                <div className="bg-primary w-full rounded-t" style={{ height: '60%' }}></div>
-                                <div className="bg-primary w-full rounded-t" style={{ height: '85%' }}></div>
-                            </div>
-                            <div className="flex justify-between px-4 mt-2 text-xs text-muted">
-                                <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span>
-                            </div>
+                        <div className="chart-placeholder h-48 mt-4">
+                            <CashFlowChart data={financial.history || []} />
                         </div>
                         <div className="flex justify-between mt-4 border-t pt-4">
                             <div>
@@ -196,6 +190,38 @@ const Dashboard = () => {
 
                 {/* Sidebar Column */}
                 <aside className="sidebar-column">
+                    {/* Goals Widget */}
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="text-h3 flex items-center gap-2">
+                                <Target className="text-primary" size={18} /> Metas da Empresa
+                            </h3>
+                            <Link to="/metas" className="text-xs text-primary hover:underline">Ver todas</Link>
+                        </div>
+                        {(!data.goals || data.goals.length === 0) ? (
+                            <div className="text-center py-4 text-muted text-sm">
+                                <p>Nenhuma meta definida.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 p-4 pt-0">
+                                {data.goals.slice(0, 3).map((goal: any) => (
+                                    <div key={goal.id}>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-medium truncate pr-2">{goal.title}</span>
+                                            <span className="font-bold">{goal.progress}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-2">
+                                            <div
+                                                className="bg-primary h-2 rounded-full transition-all duration-500"
+                                                style={{ width: `${goal.progress}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="card">
                         <div className="card-header">
                             <h3 className="text-h3">Alertas Recentes</h3>

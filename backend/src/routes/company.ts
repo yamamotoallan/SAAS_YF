@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { Router } from 'express';
 import prisma from '../lib/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthRequest, checkRole } from '../middleware/auth';
 
 const router = Router();
 
@@ -21,7 +21,7 @@ router.get('/', async (req: AuthRequest, res) => {
 });
 
 // PUT /api/company
-router.put('/', async (req: AuthRequest, res) => {
+router.put('/', checkRole(['admin']), async (req: AuthRequest, res) => {
     try {
         const company = await prisma.company.update({
             where: { id: req.companyId },

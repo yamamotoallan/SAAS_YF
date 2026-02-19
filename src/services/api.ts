@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://saasyf-production.up.railway.app/api';
 
 // Token management
 export const getToken = (): string | null => localStorage.getItem('yf_token');

@@ -1,0 +1,115 @@
+.reports-container {
+    padding-bottom: 4rem;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+}
+
+.report-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    background: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.report-preview {
+    background: #525659;
+    padding: 2rem;
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    overflow: auto;
+}
+
+/* A4 Paper Simulation */
+.a4-paper {
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    color: var(--text-primary);
+}
+
+.report-title-page {
+    text-align: center;
+    padding-top: 60mm;
+}
+
+.report-logo {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.report-meta {
+    margin-top: 4rem;
+    color: var(--text-muted);
+}
+
+.print-only {
+    display: none;
+}
+
+
+.page-break {
+    page-break-before: always;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .reports-container,
+    .reports-header,
+    .sidebar {
+        display: none !important;
+    }
+
+    .a4-paper,
+    .a4-paper * {
+        visibility: visible;
+    }
+
+    .a4-paper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 15mm;
+        box-shadow: none;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+}

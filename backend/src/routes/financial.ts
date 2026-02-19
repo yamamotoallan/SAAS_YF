@@ -126,7 +126,6 @@ router.put('/:id', async (req: AuthRequest, res) => {
         });
 
         const updated = await prisma.financialEntry.findUnique({ where: { id: req.params.id } });
-        const updated = await prisma.financialEntry.findUnique({ where: { id: req.params.id } });
         logActivity({ action: 'updated', module: 'financial', entityId: req.params.id, entityName: before.description, details: { changes: req.body }, companyId: req.companyId!, userId: req.userId });
 
         // Sync Goals

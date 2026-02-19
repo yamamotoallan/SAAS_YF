@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import {
     Activity,
     Filter,
@@ -26,7 +26,7 @@ const MODULE_LABELS: Record<string, string> = {
     company: 'Empresa',
 };
 
-const ACTION_CONFIG: Record<string, { label: string; icon: JSX.Element; color: string }> = {
+const ACTION_CONFIG: Record<string, { label: string; icon: ReactNode; color: string }> = {
     created: { label: 'Criado', icon: <Plus size={14} />, color: 'var(--color-success)' },
     updated: { label: 'Atualizado', icon: <Edit2 size={14} />, color: 'var(--color-primary)' },
     deleted: { label: 'Excluído', icon: <Trash2 size={14} />, color: 'var(--color-danger)' },

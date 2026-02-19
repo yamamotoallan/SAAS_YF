@@ -193,6 +193,14 @@ export const api = {
     operations: {
         metrics: () => request<any>('/operations/metrics'),
     },
+
+    // ============ LOGS ============
+    logs: {
+        list: (params?: Record<string, string>) => {
+            const query = params ? '?' + new URLSearchParams(params).toString() : '';
+            return request<any[]>(`/logs${query}`);
+        },
+    },
 };
 
 export default api;

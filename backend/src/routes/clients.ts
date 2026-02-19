@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
+import { logActivity } from '../lib/log';
 
 const router = Router();
 
@@ -69,6 +70,7 @@ router.post('/', async (req: AuthRequest, res) => {
             },
         });
 
+        logActivity({ action: 'created', module: 'client', entityId: client.id, entityName: client.name, companyId: req.companyId!, userId: req.userId });
         res.status(201).json(client);
     } catch (err) {
         console.error(err);
@@ -79,14 +81,13 @@ router.post('/', async (req: AuthRequest, res) => {
 // PUT /api/clients/:id
 router.put('/:id', async (req: AuthRequest, res) => {
     try {
-        const client = await prisma.client.updateMany({
-            where: { id: req.params.id, companyId: req.companyId },
-            data: req.body,
-        });
+        const before = await prisma.client.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
+        if (!before) { res.status(404).json({ error: 'Cliente não encontrado' }); return; }
 
-        if (client.count === 0) { res.status(404).json({ error: 'Cliente não encontrado' }); return; }
-
+        await prisma.client.update({ where: { id: req.params.id }, data: req.body });
         const updated = await prisma.client.findUnique({ where: { id: req.params.id } });
+
+        logActivity({ action: 'updated', module: 'client', entityId: req.params.id, entityName: before.name, details: { changes: req.body }, companyId: req.companyId!, userId: req.userId });
         res.json(updated);
     } catch (err) {
         console.error(err);
@@ -97,9 +98,10 @@ router.put('/:id', async (req: AuthRequest, res) => {
 // DELETE /api/clients/:id
 router.delete('/:id', async (req: AuthRequest, res) => {
     try {
-        await prisma.client.deleteMany({
-            where: { id: req.params.id, companyId: req.companyId },
-        });
+        const client = await prisma.client.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
+        await prisma.client.deleteMany({ where: { id: req.params.id, companyId: req.companyId } });
+
+        logActivity({ action: 'deleted', module: 'client', entityId: req.params.id, entityName: client?.name || req.params.id, companyId: req.companyId!, userId: req.userId });
         res.json({ message: 'Cliente removido' });
     } catch (err) {
         console.error(err);

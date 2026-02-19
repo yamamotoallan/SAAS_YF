@@ -21,6 +21,7 @@ model User {
 
   assignedItems OperatingItem[]
   alerts        Alert[]
+  activityLogs  ActivityLog[]
 }
 
 model Company {
@@ -42,6 +43,7 @@ model Company {
   financialEntries FinancialEntry[]
   people         Person[]
   alerts         Alert[]
+  activityLogs   ActivityLog[]
 }
 
 model Client {
@@ -217,4 +219,20 @@ model Alert {
 
   user   User?   @relation(fields: [userId], references: [id])
   userId String?
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  action     String   // created, updated, deleted, resolved, dismissed, moved
+  module     String   // client, flow, item, financial, person, alert, kpi, process, company
+  entityId   String   // ID of the affected record
+  entityName String   // Human-readable name of the record
+  details    String?  // JSON string with before/after or additional context
+  createdAt  DateTime @default(now())
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+
+  user      User?   @relation(fields: [userId], references: [id])
+  userId    String?
 }

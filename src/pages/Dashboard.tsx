@@ -1,171 +1,220 @@
+import { useState, useEffect } from 'react';
 import {
-    TrendingUp,
-    TrendingDown,
-    AlertTriangle,
+    LayoutDashboard,
     Users,
-    Wallet,
+    AlertTriangle,
+    CheckCircle,
     ArrowRight,
     Activity,
-    BrainCircuit,
-    Layers,
-    CheckCircle
+    DollarSign,
+    Clock,
+    Shield
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { api } from '../services/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadDashboard = async () => {
+            try {
+                const dashboardData = await api.dashboard.get();
+                setData(dashboardData);
+            } catch (error) {
+                console.error('Failed to load dashboard', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadDashboard();
+    }, []);
+
+    if (loading) return (
+        <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+    );
+
+    if (!data) return <div className="p-8 text-center text-muted">Erro ao carregar dados do dashboard.</div>;
+
+    const { sgeScore, sgeStatus, financial, people, pipeline, processMaturity, alerts } = data;
+
     return (
-        <div className="dashboard-container animate-fade">
-            <header className="dashboard-header">
+        <div className="container animate-fade">
+            <header className="page-header">
                 <div>
-                    <h1 className="text-h2">Visão Geral Executiva</h1>
-                    <p className="text-small">Mission Control: Estratégia, Operação e Resultados</p>
+                    <h1 className="text-h2">Visão Geral</h1>
+                    <p className="text-small">Monitoramento estratégico e operacional</p>
                 </div>
-                <div className="score-card">
-                    <div className="score-label">Score Geral (SGE)</div>
-                    <div className="score-value text-success">85/100</div>
-                    <div className="badge badge-success">Empresa Saudável</div>
+                <div className={`status-badge-lg ${sgeScore >= 70 ? 'success' : sgeScore >= 50 ? 'warning' : 'danger'}`}>
+                    <Activity size={18} className="mr-2" />
+                    {sgeStatus} | Score: {sgeScore}
                 </div>
             </header>
 
+            {/* Strategic KPIs */}
             <div className="dashboard-grid">
-                {/* Main Content Area */}
-                <div className="main-column">
-
-                    {/* Strategic & Operational Pulse */}
-                    <section className="pulse-grid">
-                        <Link to="/processos" className="pulse-card">
-                            <div className="pulse-icon secondary"><BrainCircuit size={24} /></div>
-                            <div className="pulse-content">
-                                <span className="pulse-label">Maturidade de Processos</span>
-                                <div className="pulse-value">Transição</div>
-                                <div className="pulse-meta text-warning">Risco em Estratégia</div>
-                            </div>
-                        </Link>
-                        <Link to="/operacao" className="pulse-card">
-                            <div className="pulse-icon warning"><Activity size={24} /></div>
-                            <div className="pulse-content">
-                                <span className="pulse-label">Eficiência Operacional</span>
-                                <div className="pulse-value">Sob Pressão</div>
-                                <div className="pulse-meta text-danger">Gargalo em Negociação</div>
-                            </div>
-                        </Link>
-                        <Link to="/fluxos" className="pulse-card">
-                            <div className="pulse-icon primary"><Layers size={24} /></div>
-                            <div className="pulse-content">
-                                <span className="pulse-label">Pipeline de Vendas</span>
-                                <div className="pulse-value">R$ 850k</div>
-                                <div className="pulse-meta text-success">65 Itens Ativos</div>
-                            </div>
-                        </Link>
-                    </section>
-
-                    {/* Financial Summary */}
-                    <section className="dashboard-section">
-                        <div className="section-header">
-                            <h3 className="section-title"><Wallet size={18} /> Resumo Financeiro</h3>
-                            <Link to="/financeiro" className="btn-link">Ver detalhe <ArrowRight size={14} /></Link>
-                        </div>
-                        <div className="metrics-grid">
-                            <div className="metric-card">
-                                <span className="metric-label">Faturamento Mensal</span>
-                                <div className="metric-value">R$ 145.000</div>
-                                <div className="metric-trend positive">
-                                    <TrendingUp size={14} /> +12% vs mês anterior
-                                </div>
-                            </div>
-                            <div className="metric-card">
-                                <span className="metric-label">Margem Operacional</span>
-                                <div className="metric-value">22%</div>
-                                <div className="metric-trend negative">
-                                    <TrendingDown size={14} /> -2% vs meta
-                                </div>
-                            </div>
-                            <div className="metric-card">
-                                <span className="metric-label">Caixa Disponível</span>
-                                <div className="metric-value">R$ 320.000</div>
-                                <div className="metric-trend neutral">
-                                    <Activity size={14} /> 4 meses de operação
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* People & Culture */}
-                    <section className="dashboard-section">
-                        <div className="section-header">
-                            <h3 className="section-title"><Users size={18} /> Pessoas & Cultura</h3>
-                            <Link to="/pessoas" className="btn-link">Ver detalhe <ArrowRight size={14} /></Link>
-                        </div>
-                        <div className="metrics-grid">
-                            <div className="metric-card">
-                                <span className="metric-label">Headcount</span>
-                                <div className="metric-value">42</div>
-                                <div className="text-caption">Colaboradores ativos</div>
-                            </div>
-                            <div className="metric-card">
-                                <span className="metric-label">Turnover (Trimestre)</span>
-                                <div className="metric-value text-warning">5.2%</div>
-                                <div className="text-caption">Atenção requerida</div>
-                            </div>
-                            <div className="metric-card">
-                                <span className="metric-label">Clima Organizacional</span>
-                                <div className="metric-value">4.2/5.0</div>
-                                <div className="badge badge-success">Bom</div>
-                            </div>
-                        </div>
-                    </section>
+                <div className="card summary-card">
+                    <div className="card-icon primary"><DollarSign size={24} /></div>
+                    <div className="card-label">Margem Líquida</div>
+                    <div className="card-value">{financial.margin}%</div>
+                    <div className="card-trend text-muted">
+                        Receita: {financial.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' })}
+                    </div>
                 </div>
+                <div className="card summary-card">
+                    <div className="card-icon success"><Users size={24} /></div>
+                    <div className="card-label">Clima & Pessoas</div>
+                    <div className="card-value">{people.climateScore} <span className="text-sm text-muted">/ 5.0</span></div>
+                    <div className="card-trend text-muted">
+                        Headcount: {people.headcount}
+                    </div>
+                </div>
+                <div className="card summary-card">
+                    <div className="card-icon warning"><Clock size={24} /></div>
+                    <div className="card-label">Pipeline Ativo</div>
+                    <div className="card-value">{pipeline.activeItems}</div>
+                    <div className="card-trend text-muted">
+                        Valor: {pipeline.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' })}
+                    </div>
+                </div>
+                <div className="card summary-card">
+                    <div className="card-icon secondary"><Shield size={24} /></div>
+                    <div className="card-label">Maturidade</div>
+                    <div className="card-value">{processMaturity.score}%</div>
+                    <div className="card-trend text-muted">
+                        Nível: {processMaturity.status}
+                    </div>
+                </div>
+            </div>
 
-                {/* Right Column: Alerts & Feed */}
-                <aside className="alerts-column">
-                    <div className="alerts-card">
-                        <div className="alerts-header">
-                            <h3 className="text-h3">Alertas Prioritários</h3>
-                            <div className="badge badge-danger">3 Críticos</div>
+            <div className="content-split">
+                {/* Main Content */}
+                <div className="main-column">
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="text-h3">Fluxo de Caixa (Previsão)</h3>
+                            <div className="badge badge-neutral">Runway: ~{financial.operatingMonths} meses</div>
                         </div>
-                        <div className="alerts-list">
-                            <div className="alert-item high-priority">
-                                <AlertTriangle size={18} className="text-danger" />
-                                <div>
-                                    <div className="alert-title">Fluxo de Caixa</div>
-                                    <div className="alert-desc">Previsão negativa p/ 25/02. Necessário aporte.</div>
-                                </div>
+                        <div className="chart-placeholder">
+                            <div className="flex justify-between items-end h-32 px-4 gap-2">
+                                {/* Simplified visual representation of cash flow */}
+                                <div className="bg-primary/20 w-full rounded-t" style={{ height: '40%' }}></div>
+                                <div className="bg-primary/40 w-full rounded-t" style={{ height: '55%' }}></div>
+                                <div className="bg-primary/60 w-full rounded-t" style={{ height: '45%' }}></div>
+                                <div className="bg-primary/80 w-full rounded-t" style={{ height: '70%' }}></div>
+                                <div className="bg-primary w-full rounded-t" style={{ height: '60%' }}></div>
+                                <div className="bg-primary w-full rounded-t" style={{ height: '85%' }}></div>
                             </div>
-                            <div className="alert-item high-priority">
-                                <Activity size={18} className="text-danger" />
-                                <div>
-                                    <div className="alert-title">Gargalo Crítico</div>
-                                    <div className="alert-desc">Negociação com 168% da capacidade.</div>
-                                </div>
-                            </div>
-                            <div className="alert-item medium-priority">
-                                <TrendingDown size={18} className="text-warning" />
-                                <div>
-                                    <div className="alert-title">Margem em Queda</div>
-                                    <div className="alert-desc">Custos operacionais subiram 15%.</div>
-                                </div>
-                            </div>
-                            <div className="alert-item low-priority">
-                                <Users size={18} className="text-primary" />
-                                <div>
-                                    <div className="alert-title">Avaliação Pendente</div>
-                                    <div className="alert-desc">5 avaliações pendentes em RH.</div>
-                                </div>
+                            <div className="flex justify-between px-4 mt-2 text-xs text-muted">
+                                <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span>
                             </div>
                         </div>
-                        <Link to="/alertas" className="btn btn-secondary btn-full">
-                            Ver Central de Alertas
-                        </Link>
+                        <div className="flex justify-between mt-4 border-t pt-4">
+                            <div>
+                                <span className="block text-xs text-muted">Disponível</span>
+                                <span className="font-bold text-lg">{financial.cashAvailable.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            </div>
+                            <div>
+                                <span className="block text-xs text-muted text-right">Custos Mensais (Médio)</span>
+                                <span className="font-bold text-lg text-danger">-{financial.costs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="mini-card">
-                        <h4 className="text-small mb-sm">Próximos Passos (Plano)</h4>
-                        <ul className="checklist-sm">
-                            <li className="checked"><CheckCircle size={12} /> Planejamento Anual</li>
-                            <li className="checked"><CheckCircle size={12} /> Revisão de Processos</li>
-                            <li><div className="checkbox-empty"></div> Contratação Gerente</li>
-                        </ul>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="card">
+                            <div className="card-header">
+                                <h3 className="text-h3">Ações Prioritárias</h3>
+                            </div>
+                            <ul className="action-list">
+                                <li className="action-item">
+                                    <div className="action-icon warning"><AlertTriangle size={16} /></div>
+                                    <div className="action-info">
+                                        <span className="action-text">Revisar contratos de fornecedores</span>
+                                        <span className="action-meta">Financeiro • Vence em 2 dias</span>
+                                    </div>
+                                    <button className="btn-icon-sm"><ArrowRight size={14} /></button>
+                                </li>
+                                <li className="action-item">
+                                    <div className="action-icon primary"><Users size={16} /></div>
+                                    <div className="action-info">
+                                        <span className="action-text">Aprovar contratação de Dev Jr</span>
+                                        <span className="action-meta">Pessoas • Pendente</span>
+                                    </div>
+                                    <button className="btn-icon-sm"><ArrowRight size={14} /></button>
+                                </li>
+                                <li className="action-item">
+                                    <div className="action-icon success"><CheckCircle size={16} /></div>
+                                    <div className="action-info">
+                                        <span className="action-text">Reunião de alinhamento trimestral</span>
+                                        <span className="action-meta">Estratégia • Agendada</span>
+                                    </div>
+                                    <button className="btn-icon-sm"><ArrowRight size={14} /></button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="card">
+                            <div className="card-header">
+                                <h3 className="text-h3">Atalhos</h3>
+                            </div>
+                            <div className="quick-access-grid">
+                                <Link to="/financeiro" className="quick-access-item">
+                                    <DollarSign size={20} className="text-success" />
+                                    <span>Novo Lançamento</span>
+                                </Link>
+                                <Link to="/pessoas" className="quick-access-item">
+                                    <Users size={20} className="text-primary" />
+                                    <span>Adicionar Colaborador</span>
+                                </Link>
+                                <Link to="/fluxos" className="quick-access-item">
+                                    <LayoutDashboard size={20} className="text-warning" />
+                                    <span>Criar Card</span>
+                                </Link>
+                                <Link to="/alertas" className="quick-access-item">
+                                    <AlertTriangle size={20} className="text-danger" />
+                                    <span>Reportar Problema</span>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sidebar Column */}
+                <aside className="sidebar-column">
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="text-h3">Alertas Recentes</h3>
+                            <Link to="/alertas" className="text-xs text-primary hover:underline">Ver todos</Link>
+                        </div>
+                        {alerts.length === 0 ? (
+                            <p className="text-sm text-muted p-2">Nenhum alerta ativo.</p>
+                        ) : (
+                            <div className="alerts-list">
+                                {alerts.map((alert: any) => (
+                                    <div key={alert.id} className={`alert-item priority-${alert.priority}`}>
+                                        <div className="alert-content">
+                                            <span className="alert-title">{alert.title}</span>
+                                            <span className="alert-time">
+                                                {new Date(alert.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="card bg-secondary text-white">
+                        <h3 className="text-h3 mb-2">Plano Pro</h3>
+                        <p className="text-sm opacity-90 mb-4">
+                            Você está utilizando 85% dos recursos do plano atual. Considere fazer um upgrade.
+                        </p>
+                        <button className="btn btn-white w-full">Gerenciar Assinatura</button>
                     </div>
                 </aside>
             </div>

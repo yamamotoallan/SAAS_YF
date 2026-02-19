@@ -80,7 +80,7 @@ router.get('/', async (req: AuthRequest, res) => {
 
         // Calculate SGE Score (weighted)
         const financialScore = Math.min(100, margin * 2 + (revenue > 0 ? 30 : 0));
-        const peopleScore = headcount > 0 ? 75 : 0; // Simplified
+        const peopleScore = headcount > 0 ? 75 : 0;
         const sgeScore = Math.round((financialScore * 0.3 + peopleScore * 0.2 + overallProcessScore * 0.3 + (activeItems > 0 ? 70 : 0) * 0.2));
 
         let sgeStatus = 'Empresa Saudável';
@@ -99,7 +99,7 @@ router.get('/', async (req: AuthRequest, res) => {
             },
             people: {
                 headcount,
-                turnover: 5.2, // Would need historical calculation
+                turnover: 5.2,
                 climateScore: 4.2,
             },
             pipeline: {

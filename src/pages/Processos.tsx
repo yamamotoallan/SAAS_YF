@@ -1,20 +1,43 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
-    CheckCircle,
-    AlertTriangle,
-    XCircle,
     ChevronDown,
     ChevronUp,
     BrainCircuit,
     Target,
     ShieldAlert
 } from 'lucide-react';
-import { INITIAL_PROCESS_DATA, type ProcessBlock, type ProcessStatus, type ProcessItem } from '../data/processes';
+import { api } from '../services/api';
 import './Processos.css';
 
 const Processos = () => {
-    const [data] = useState<ProcessBlock[]>(INITIAL_PROCESS_DATA);
-    const [expandedBlocks, setExpandedBlocks] = useState<string[]>(['direction', 'finance', 'governance']);
+    const [blocks, setBlocks] = useState<any[]>([]);
+    const [diagnosis, setDiagnosis] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [expandedBlocks, setExpandedBlocks] = useState<string[]>([]);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [blocksData, diagnosisData] = await Promise.all([
+                api.processes.list(),
+                api.processes.diagnosis()
+            ]);
+            setBlocks(blocksData);
+            setDiagnosis(diagnosisData);
+            // Expand first block by default
+            if (blocksData.length > 0) {
+                setExpandedBlocks([blocksData[0].id]);
+            }
+        } catch (error) {
+            console.error('Failed to load processes data', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const toggleBlock = (id: string) => {
         setExpandedBlocks(prev =>
@@ -22,48 +45,45 @@ const Processos = () => {
         );
     };
 
-    const getStatusIcon = (status: ProcessStatus) => {
-        switch (status) {
-            case 'formal': return <CheckCircle size={18} className="text-success" />;
-            case 'informal': return <AlertTriangle size={18} className="text-warning" />;
-            case 'none': return <XCircle size={18} className="text-danger" />;
+    const handleUpdateProcess = async (itemId: string, updates: any) => {
+        try {
+            // Optimistic update
+            setBlocks(prev => prev.map(b => ({
+                ...b,
+                processes: b.processes.map((p: any) =>
+                    p.id === itemId ? { ...p, ...updates } : p
+                )
+            })));
+
+            await api.processes.updateItem(itemId, updates);
+
+            // Refresh diagnosis in background
+            const newDiagnosis = await api.processes.diagnosis();
+            setDiagnosis(newDiagnosis);
+        } catch (error) {
+            console.error('Failed to update process', error);
+            alert('Erro ao atualizar processo');
         }
     };
 
-    const getScore = (block: ProcessBlock) => {
-        let score = 0;
-        block.processes.forEach(p => {
-            if (p.status === 'formal') score += 2;
-            if (p.status === 'informal') score += 1;
+
+
+    // Helper to calculate momentary score for UI before refresh
+    const getBlockScore = (block: any) => {
+        if (!block.processes || block.processes.length === 0) return 0;
+        let points = 0;
+        block.processes.forEach((p: any) => {
+            if (p.status === 'formal') points += 3;
+            else if (p.status === 'informal') points += 1;
+            if (p.responsible) points += 1;
+            if (p.frequency === 'periodic') points += 1;
+            else if (p.frequency === 'eventual') points += 0.5;
         });
-        // Max score = 10 (5 processes * 2 points)
-        return (score / 10) * 100;
+        const maxPoints = block.processes.length * 5;
+        return Math.round((points / maxPoints) * 100);
     };
 
-    const diagnosis = useMemo(() => {
-        const criticalRisks: ProcessItem[] = [];
-        let weaknesses = 0;
-
-        data.forEach(block => {
-            const score = getScore(block);
-            if (score < 50) weaknesses++;
-
-            block.processes.forEach(p => {
-                if (p.status === 'none' || p.status === 'informal') {
-                    // Identify impactful missing processes
-                    if (['D02', 'F05', 'P04', 'G03', 'O05'].includes(p.code)) {
-                        criticalRisks.push(p);
-                    }
-                }
-            });
-        });
-
-        return {
-            overallStatus: weaknesses > 2 ? 'Empresa em Risco' : weaknesses > 0 ? 'Empresa em Transição' : 'Empresa Saudável',
-            criticalRisks,
-            strengths: ['Operacional', 'Administrativo'] // Hardcoded for this simulation logic
-        };
-    }, [data]);
+    if (loading) return <div className="p-8 text-center text-muted">Carregando matriz de maturidade...</div>;
 
     return (
         <div className="container animate-fade">
@@ -73,15 +93,17 @@ const Processos = () => {
                     <p className="text-small">Avaliação estrutural e diagnóstico organizacional</p>
                 </div>
                 <div className="header-meta">
-                    <span className="meta-label">Data da Avaliação:</span>
-                    <span className="meta-value">16/02/2026</span>
+                    <span className="meta-label">Diagnóstico Atual:</span>
+                    <span className={`meta-value text-${diagnosis?.statusClass || 'muted'}`}>
+                        {diagnosis?.overallStatus || 'Calculando...'}
+                    </span>
                 </div>
             </header>
 
             <div className="process-layout">
                 <div className="matrix-column">
-                    {data.map(block => {
-                        const score = getScore(block);
+                    {blocks.map(block => {
+                        const score = getBlockScore(block);
                         const isExpanded = expandedBlocks.includes(block.id);
 
                         return (
@@ -91,7 +113,7 @@ const Processos = () => {
                                     onClick={() => toggleBlock(block.id)}
                                 >
                                     <div className="block-title-row">
-                                        <h3 className="block-title">{block.title}</h3>
+                                        <h3 className="block-title">{block.name}</h3>
                                         <div className="block-score">
                                             <div className="score-bar-bg">
                                                 <div
@@ -112,25 +134,44 @@ const Processos = () => {
                                                 <tr>
                                                     <th style={{ width: '60px' }}>Cód</th>
                                                     <th>Processo</th>
-                                                    <th style={{ width: '120px' }}>Status</th>
-                                                    <th style={{ width: '100px' }}>Responsável</th>
-                                                    <th style={{ width: '100px' }}>Frequência</th>
+                                                    <th style={{ width: '140px' }}>Status</th>
+                                                    <th style={{ width: '100px' }}>Resp.</th>
+                                                    <th style={{ width: '120px' }}>Frequência</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {block.processes.map(p => (
+                                                {block.processes.map((p: any) => (
                                                     <tr key={p.id}>
                                                         <td className="text-caption">{p.code}</td>
-                                                        <td className="process-name">{p.name}</td>
+                                                        <td className="process-name" title={p.observation}>{p.name}</td>
                                                         <td className="status-cell">
-                                                            {getStatusIcon(p.status)}
-                                                            <span className="status-label">
-                                                                {p.status === 'formal' ? 'Formal' : p.status === 'informal' ? 'Informal' : 'Inexistente'}
-                                                            </span>
+                                                            <select
+                                                                className={`status-select ${p.status}`}
+                                                                value={p.status}
+                                                                onChange={(e) => handleUpdateProcess(p.id, { status: e.target.value })}
+                                                            >
+                                                                <option value="none">Inexistente</option>
+                                                                <option value="informal">Informal</option>
+                                                                <option value="formal">Formal</option>
+                                                            </select>
                                                         </td>
-                                                        <td>{p.responsible ? 'Sim' : 'Não'}</td>
-                                                        <td className="text-caption">
-                                                            {p.frequency === 'periodic' ? 'Periódica' : p.frequency === 'eventual' ? 'Eventual' : '-'}
+                                                        <td className="text-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={p.responsible}
+                                                                onChange={(e) => handleUpdateProcess(p.id, { responsible: e.target.checked })}
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <select
+                                                                className="freq-select"
+                                                                value={p.frequency}
+                                                                onChange={(e) => handleUpdateProcess(p.id, { frequency: e.target.value })}
+                                                            >
+                                                                <option value="never">-</option>
+                                                                <option value="eventual">Eventual</option>
+                                                                <option value="periodic">Periódica</option>
+                                                            </select>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -152,32 +193,43 @@ const Processos = () => {
 
                         <div className="overall-verdict">
                             <span className="verdict-label">Classificação Geral</span>
-                            <div className={`verdict-badge ${diagnosis.overallStatus === 'Empresa Saudável' ? 'success' : diagnosis.overallStatus === 'Empresa em Risco' ? 'danger' : 'warning'}`}>
-                                {diagnosis.overallStatus}
+                            <div className={`verdict-badge ${diagnosis?.statusClass || 'neutral'}`}>
+                                {diagnosis?.overallStatus || 'N/A'}
+                            </div>
+                            <div className="text-center mt-2 text-sm text-muted">
+                                Score Global: {diagnosis?.overallScore || 0}/100
                             </div>
                         </div>
 
                         <div className="diagnosis-section">
-                            <h4 className="diag-subtitle"><ShieldAlert size={16} /> Riscos Críticos (Top 5)</h4>
-                            <ul className="risk-list">
-                                {diagnosis.criticalRisks.slice(0, 5).map(risk => (
-                                    <li key={risk.id} className="risk-item">
-                                        <span className="risk-code">{risk.code}</span>
-                                        <span className="risk-name">{risk.name}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                            <p className="diag-text">
-                                A ausência destes processos compromete a escalabilidade e expõe a empresa a erros de decisão.
+                            <h4 className="diag-subtitle"><ShieldAlert size={16} /> Vulnerabilidades Críticas</h4>
+                            {diagnosis?.criticalRisks && diagnosis.criticalRisks.length > 0 ? (
+                                <ul className="risk-list">
+                                    {diagnosis.criticalRisks.slice(0, 5).map((risk: any) => (
+                                        <li key={risk.id} className="risk-item">
+                                            <span className="risk-code">{risk.code}</span>
+                                            <span className="risk-name">{risk.name}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted">Nenhum risco crítico detectado.</p>
+                            )}
+                            <p className="diag-text mt-2">
+                                {diagnosis?.criticalRisks?.length > 0
+                                    ? "A ausência destes processos compromete a escalabilidade e expõe a empresa a erros."
+                                    : "Sua empresa possui os processos vitais mapeados."}
                             </p>
                         </div>
 
                         <div className="diagnosis-section">
-                            <h4 className="diag-subtitle"><Target size={16} /> Recomendações</h4>
-                            <div className="rec-box">
-                                <p>1. Formalizar o <strong>Planejamento Anual (D02)</strong> para guiar as decisões fora do operacional.</p>
-                                <p>2. Implementar rotina de <strong>Registro de Decisões (G03)</strong> para evitar perda de histórico.</p>
-                                <p>3. Estruturar <strong>Avaliação de Desempenho (P04)</strong> simples semestral.</p>
+                            <h4 className="diag-subtitle"><Target size={16} /> Pontos Fortes</h4>
+                            <div className="rec-box border-l-success">
+                                {diagnosis?.strengths && diagnosis.strengths.length > 0 ? (
+                                    <p>{diagnosis.strengths.join(', ')}</p>
+                                ) : (
+                                    <p className="text-muted">Melhore seus processos para destacar pontos fortes.</p>
+                                )}
                             </div>
                         </div>
                     </div>

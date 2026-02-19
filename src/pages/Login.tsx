@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api, setToken, setUser } from '../services/api';
 import './Login.css';
 
 const Login = () => {
@@ -7,10 +8,24 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = (e: React.FormEvent) => {
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simulate login
-        navigate('/');
+        setError('');
+        setLoading(true);
+
+        try {
+            const { token, user } = await api.auth.login(email, password);
+            setToken(token);
+            setUser(user);
+            navigate('/');
+        } catch (err: any) {
+            setError(err.message || 'Falha no login. Verifique suas credenciais.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -76,8 +91,21 @@ const Login = () => {
                             <a href="#" className="forgot-password">Esqueceu a senha?</a>
                         </div>
 
-                        <button type="submit" className="btn btn-primary btn-block">
-                            Entrar no Sistema
+                        {error && (
+                            <div className="alert-error" style={{
+                                background: '#fee2e2',
+                                color: '#dc2626',
+                                padding: '0.75rem',
+                                borderRadius: '0.375rem',
+                                marginBottom: '1rem',
+                                fontSize: '0.875rem'
+                            }}>
+                                {error}
+                            </div>
+                        )}
+
+                        <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                            {loading ? 'Entrando...' : 'Entrar no Sistema'}
                         </button>
                     </form>
 

@@ -1,114 +1,247 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     AlertTriangle,
-    TrendingDown,
-    Users,
-    Clock,
     CheckCircle,
+    XCircle,
+    Plus,
     Filter,
-    ArrowRight
+    Activity,
+    BrainCircuit,
+    DollarSign,
+    Users,
+    Clock
 } from 'lucide-react';
+import { api } from '../services/api';
+import Modal from '../components/Modal/Modal';
 import './Alertas.css';
 
 const Alertas = () => {
-    const [filter, setFilter] = useState('active');
+    // Data State
+    const [alerts, setAlerts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
-    const alerts = [
-        { id: 1, type: 'finance', priority: 'high', title: 'Fluxo de Caixa Projetado', msg: 'Previsão de caixa negativo para dia 25/02. Necessário aporte ou antecipação.', date: 'Hoje, 09:00' },
-        { id: 2, type: 'finance', priority: 'medium', title: 'Margem em Queda', msg: 'Custos operacionais subiram 15% este mês, impactando a margem direta.', date: 'Ontem, 14:30' },
-        { id: 3, type: 'people', priority: 'medium', title: 'Turnover no Comercial', msg: '3 desligamentos no setor comercial nos últimos 30 dias.', date: '15/02, 10:00' },
-        { id: 4, type: 'people', priority: 'low', title: 'Avaliação de Desempenho', msg: 'Ciclo trimestral pendente para 5 gestores. Prazo encerra em 3 dias.', date: '14/02, 16:45' },
-        { id: 5, type: 'strategy', priority: 'low', title: 'Meta de Expansão', msg: 'Progresso da meta de abertura de nova filial está 10% atrasado.', date: '12/02, 11:20' },
-    ];
+    // UI State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Form State
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        type: 'operational',
+        priority: 'medium'
+    });
+
+    useEffect(() => {
+        loadAlerts();
+    }, [activeTab]);
+
+    const loadAlerts = async () => {
+        try {
+            setLoading(true);
+            const status = activeTab === 'history' ? 'history' : 'active';
+            const data = await api.alerts.list({ status });
+            setAlerts(data);
+        } catch (error) {
+            console.error('Failed to load alerts', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResolve = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await api.alerts.resolve(id);
+            setAlerts(prev => prev.filter(a => a.id !== id));
+        } catch (error) {
+            alert('Erro ao resolver alerta');
+        }
+    };
+
+    const handleDismiss = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await api.alerts.dismiss(id);
+            setAlerts(prev => prev.filter(a => a.id !== id));
+        } catch (error) {
+            alert('Erro ao dispensar alerta');
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            await api.alerts.create(formData);
+            if (activeTab === 'active') await loadAlerts();
+            setIsModalOpen(false);
+            setFormData({ title: '', description: '', type: 'operational', priority: 'medium' });
+        } catch (error) {
+            alert('Erro ao criar alerta');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const getPriorityBadge = (priority: string) => {
+        switch (priority) {
+            case 'high': return <span className="badge badge-danger">Alta</span>;
+            case 'medium': return <span className="badge badge-warning">Média</span>;
+            case 'low': return <span className="badge badge-neutral">Baixa</span>;
+            default: return null;
+        }
+    };
+
+    const getTypeIcon = (type: string) => {
+        switch (type) {
+            case 'financial': return <DollarSign size={20} className="text-success" />;
+            case 'people': return <Users size={20} className="text-secondary" />;
+            case 'operational': return <Activity size={20} className="text-warning" />;
+            case 'system': return <BrainCircuit size={20} className="text-primary" />;
+            default: return <AlertTriangle size={20} className="text-muted" />;
+        }
+    };
 
     return (
         <div className="container animate-fade">
             <header className="page-header">
                 <div>
-                    <h1 className="text-h2">Alertas & Insights</h1>
-                    <p className="text-small">Monitoramento ativo de riscos e oportunidades</p>
+                    <h1 className="text-h2">Central de Alertas</h1>
+                    <p className="text-small">Monitoramento inteligente e notificações</p>
                 </div>
-                <div className="header-actions">
-                    <button className={`btn ${filter === 'active' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('active')}>
-                        Ativos
+                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                    <Plus size={16} /> Novo Alerta
+                </button>
+            </header>
+
+            <div className="toolbar">
+                <div className="tabs">
+                    <button
+                        className={`tab-btn ${activeTab === 'active' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('active')}
+                    >
+                        Pendentes
                     </button>
-                    <button className={`btn ${filter === 'history' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('history')}>
+                    <button
+                        className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('history')}
+                    >
                         Histórico
                     </button>
                 </div>
-            </header>
-
-            <div className="alerts-layout">
-                <div className="alerts-feed">
-                    <div className="feed-header">
-                        <h3 className="text-h3">Feed de Alertas</h3>
-                        <button className="btn-icon"><Filter size={16} /></button>
-                    </div>
-
-                    <div className="feed-list">
-                        {alerts.map(alert => (
-                            <div key={alert.id} className={`feed-item ${alert.priority}`}>
-                                <div className="feed-icon-col">
-                                    {alert.priority === 'high' ? (
-                                        <div className="icon-box danger"><AlertTriangle size={20} /></div>
-                                    ) : alert.priority === 'medium' ? (
-                                        <div className="icon-box warning"><TrendingDown size={20} /></div>
-                                    ) : (
-                                        <div className="icon-box info"><Users size={20} /></div>
-                                    )}
-                                    <div className="connector-line"></div>
-                                </div>
-                                <div className="feed-content">
-                                    <div className="feed-meta">
-                                        <span className="feed-date"><Clock size={12} /> {alert.date}</span>
-                                        <span className={`priority-badge ${alert.priority}`}>
-                                            {alert.priority === 'high' ? 'Alta Prioridade' : alert.priority === 'medium' ? 'Média' : 'Baixa'}
-                                        </span>
-                                    </div>
-                                    <h4 className="feed-title">{alert.title}</h4>
-                                    <p className="feed-msg">{alert.msg}</p>
-                                    <div className="feed-actions">
-                                        <button className="btn-action">Marcar como visto <CheckCircle size={14} /></button>
-                                        <button className="btn-action primary">Ver detalhes <ArrowRight size={14} /></button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="alerts-sidebar">
-                    <div className="card">
-                        <h3 className="text-h3 mb-md">Resumo de Riscos</h3>
-                        <div className="risk-summary">
-                            <div className="risk-row">
-                                <span className="risk-label">Financeiro</span>
-                                <div className="risk-bar">
-                                    <div className="risk-fill danger" style={{ width: '80%' }}></div>
-                                </div>
-                            </div>
-                            <div className="risk-row">
-                                <span className="risk-label">Pessoas</span>
-                                <div className="risk-bar">
-                                    <div className="risk-fill warning" style={{ width: '45%' }}></div>
-                                </div>
-                            </div>
-                            <div className="risk-row">
-                                <span className="risk-label">Operacional</span>
-                                <div className="risk-bar">
-                                    <div className="risk-fill success" style={{ width: '15%' }}></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="insight-box">
-                            <span className="insight-title">Insight Gerado por IA</span>
-                            <p className="insight-text">
-                                Baseado no histórico, o turnover no comercial tende a aumentar em Março. Considere revisar o plano de incentivos agora.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <button className="btn-icon"><Filter size={16} /></button>
             </div>
+
+            {loading ? (
+                <div className="p-8 text-center text-muted">Carregando alertas...</div>
+            ) : alerts.length === 0 ? (
+                <div className="empty-state">
+                    <div className="empty-icon"><CheckCircle size={48} className="text-success" /></div>
+                    <h3>Tudo limpo!</h3>
+                    <p>{activeTab === 'active' ? 'Não há alertas pendentes no momento.' : 'Nenhum histórico encontrado.'}</p>
+                </div>
+            ) : (
+                <div className="alerts-feed">
+                    {alerts.map(alert => (
+                        <div key={alert.id} className={`alert-card priority-${alert.priority || 'medium'}`}>
+                            <div className="alert-icon-area">
+                                {getTypeIcon(alert.type)}
+                            </div>
+                            <div className="alert-content">
+                                <div className="alert-header-row">
+                                    <h3 className="alert-title">{alert.title}</h3>
+                                    {getPriorityBadge(alert.priority)}
+                                </div>
+                                <p className="alert-desc">{alert.description}</p>
+                                <div className="alert-meta">
+                                    <span className="meta-item"><Clock size={12} /> {new Date(alert.createdAt).toLocaleDateString()}</span>
+                                    <span className="meta-item ml-2 capitalize">• {alert.type}</span>
+                                </div>
+                            </div>
+                            {activeTab === 'active' && (
+                                <div className="alert-actions">
+                                    <button
+                                        className="btn-icon-action success"
+                                        title="Resolver"
+                                        onClick={(e) => handleResolve(alert.id, e)}
+                                    >
+                                        <CheckCircle size={18} />
+                                    </button>
+                                    <button
+                                        className="btn-icon-action danger"
+                                        title="Ignorar"
+                                        onClick={(e) => handleDismiss(alert.id, e)}
+                                    >
+                                        <XCircle size={18} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Criar Alerta Manual"
+                footer={
+                    <>
+                        <button className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                        <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>Criar</button>
+                    </>
+                }
+            >
+                <form className="form-grid">
+                    <div className="form-group">
+                        <label>Título</label>
+                        <input
+                            type="text"
+                            className="input-field"
+                            required
+                            value={formData.title}
+                            onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Descrição</label>
+                        <textarea
+                            className="input-field"
+                            rows={3}
+                            required
+                            value={formData.description}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Tipo</label>
+                        <select
+                            className="input-field"
+                            value={formData.type}
+                            onChange={e => setFormData({ ...formData, type: e.target.value })}
+                        >
+                            <option value="operational">Operacional</option>
+                            <option value="financial">Financeiro</option>
+                            <option value="people">Pessoas</option>
+                            <option value="system">Sistema</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Prioridade</label>
+                        <select
+                            className="input-field"
+                            value={formData.priority}
+                            onChange={e => setFormData({ ...formData, priority: e.target.value })}
+                        >
+                            <option value="low">Baixa</option>
+                            <option value="medium">Média</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };

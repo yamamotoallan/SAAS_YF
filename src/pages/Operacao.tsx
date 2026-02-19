@@ -1,37 +1,51 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Activity,
     Clock,
-    AlertOctagon,
     ArrowRight,
     RefreshCw,
-    GitCommit,
     BarChart2,
     AlertTriangle,
-    Lightbulb
+    Lightbulb,
+    CheckCircle
 } from 'lucide-react';
-import { OPERATION_DATA } from '../data/operations'; // Assuming simulation data is here
+import { api } from '../services/api';
 import './Operacao.css';
 
 const Operacao = () => {
-    const data = OPERATION_DATA;
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
 
-    const diagnosis = useMemo(() => {
-        // Logic to classify operation
-        let status = 'Operação Equilibrada';
-        let statusClass = 'success';
+    useEffect(() => {
+        loadData();
+    }, []);
 
-        if (data.slaCompliance < 70 || data.delayedItems > (data.totalActive * 0.2)) {
-            status = 'Operação sob Pressão';
-            statusClass = 'warning';
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const response = await api.operations.metrics();
+            setData(response);
+            if (response.flows.length > 0) {
+                setSelectedFlowId(response.flows[0].flowId);
+            }
+        } catch (error) {
+            console.error('Failed to load operations data', error);
+        } finally {
+            setLoading(false);
         }
-        if (data.slaCompliance < 50 || data.bottlenecks.length > 1) {
-            status = 'Operação em Risco';
-            statusClass = 'danger';
-        }
+    };
 
-        return { status, statusClass };
-    }, [data]);
+    if (loading) return <div className="p-8 text-center text-muted">Carregando eficiência...</div>;
+    if (!data || !data.flows || data.flows.length === 0) return (
+        <div className="empty-state">
+            <Activity size={48} className="text-muted" />
+            <h3 className="mt-4">Sem dados operacionais</h3>
+            <p>Crie fluxos e itens para gerar métricas de eficiência.</p>
+        </div>
+    );
+
+    const activeFlow = data.flows.find((f: any) => f.flowId === selectedFlowId) || data.flows[0];
 
     return (
         <div className="container animate-fade">
@@ -40,39 +54,41 @@ const Operacao = () => {
                     <h1 className="text-h2">Eficiência Operacional</h1>
                     <p className="text-small">Análise de fluxos, gargalos e capacidade</p>
                 </div>
-                <div className="status-badge-lg" data-type={diagnosis.statusClass}>
-                    {diagnosis.status}
+                <div className={`status-badge-lg ${data.overall.statusClass}`}>
+                    {data.overall.status || 'Operação Normal'}
                 </div>
             </header>
 
-            {/* KPI Cockpit */}
+            {/* KPI Cockpit - Overall */}
             <div className="ops-metrics-grid">
                 <div className="ops-card">
                     <div className="ops-icon primary"><Activity size={20} /></div>
                     <div className="ops-stat">
                         <span className="ops-label">Itens Ativos</span>
-                        <span className="ops-value">{data.totalActive}</span>
+                        <span className="ops-value">{data.overall.totalActive}</span>
                     </div>
                 </div>
                 <div className="ops-card">
                     <div className="ops-icon warning"><Clock size={20} /></div>
                     <div className="ops-stat">
-                        <span className="ops-label">Tempo Médio (Ciclo)</span>
-                        <span className="ops-value">{data.avgCycleTime} dias</span>
+                        <span className="ops-label">Gargalos Críticos</span>
+                        <span className="ops-value">{data.overall.totalBottlenecks}</span>
                     </div>
                 </div>
                 <div className="ops-card">
-                    <div className="ops-icon danger"><AlertOctagon size={20} /></div>
+                    <div className="ops-icon success"><CheckCircle size={20} /></div>
                     <div className="ops-stat">
-                        <span className="ops-label">SLA Cumprido</span>
-                        <span className="ops-value text-danger">{data.slaCompliance}%</span>
+                        <span className="ops-label">SLA Cumprido (Médio)</span>
+                        <span className={`ops-value ${data.overall.avgSlaCompliance < 70 ? 'text-danger' : 'text-success'}`}>
+                            {data.overall.avgSlaCompliance}%
+                        </span>
                     </div>
                 </div>
                 <div className="ops-card">
                     <div className="ops-icon secondary"><RefreshCw size={20} /></div>
                     <div className="ops-stat">
-                        <span className="ops-label">Taxa de Retrabalho</span>
-                        <span className="ops-value">{data.reworkRate}%</span>
+                        <span className="ops-label">Volume Processado</span>
+                        <span className="ops-value">{activeFlow.valueProcessing.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' })}</span>
                     </div>
                 </div>
             </div>
@@ -81,22 +97,33 @@ const Operacao = () => {
                 <div className="flow-column">
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="text-h3">Fluxo: {data.flowName}</h3>
+                            <h3 className="text-h3">
+                                Fluxo:
+                                <select
+                                    className="ml-2 p-1 border rounded"
+                                    value={selectedFlowId || ''}
+                                    onChange={(e) => setSelectedFlowId(e.target.value)}
+                                >
+                                    {data.flows.map((f: any) => (
+                                        <option key={f.flowId} value={f.flowId}>{f.flowName}</option>
+                                    ))}
+                                </select>
+                            </h3>
                             <span className="text-caption">Visualização de Gargalos</span>
                         </div>
 
                         <div className="flow-visual">
-                            {data.stages.map((stage, index) => {
-                                const isBottleneck = data.bottlenecks.includes(stage.id);
-                                const load = (stage.volume / stage.capacity) * 100;
+                            {activeFlow.stages.map((stage: any, index: number) => {
+                                const load = stage.capacity > 0 ? (stage.volume / stage.capacity) * 100 : 0;
+                                const isBottleneck = stage.isBottleneck;
 
                                 return (
                                     <div key={stage.id} className={`flow-stage ${isBottleneck ? 'bottleneck' : ''}`}>
                                         <div className="stage-info">
                                             <span className="stage-name">{index + 1}. {stage.name}</span>
                                             <div className="stage-meta">
-                                                <span className="meta-item"><UsersIcon size={12} /> Vol: {stage.volume}</span>
-                                                <span className="meta-item"><Clock size={12} /> Médio: {stage.avgTime}d</span>
+                                                <span className="meta-item">Vol: {stage.volume}</span>
+                                                <span className="meta-item">Médio: {stage.avgTime}d</span>
                                             </div>
                                         </div>
 
@@ -115,7 +142,7 @@ const Operacao = () => {
                                             </div>
                                         </div>
 
-                                        {index < data.stages.length - 1 && (
+                                        {index < activeFlow.stages.length - 1 && (
                                             <div className="flow-arrow">
                                                 <ArrowRight size={16} />
                                             </div>
@@ -133,31 +160,27 @@ const Operacao = () => {
 
                         <div className="diag-block">
                             <h4 className="diag-sub"><AlertTriangle size={16} /> Principais Gargalos</h4>
-                            <ul className="diag-list">
-                                {data.stages.filter(s => data.bottlenecks.includes(s.id)).map(s => (
-                                    <li key={s.id}>
-                                        <strong>{s.name}</strong> está operando
-                                        <span className="text-danger"> {Math.round((s.volume / s.capacity) * 100)}% </span>
-                                        acima da capacidade. O tempo médio ({s.avgTime}d) é mais que o dobro do SLA ({s.sla}d).
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div className="diag-block">
-                            <h4 className="diag-sub"><GitCommit size={16} /> Riscos Identificados</h4>
-                            <p className="diag-text">
-                                O acúmulo na fase de <strong>Negociação</strong> trava R$ {data.valueProcessing.toLocaleString('pt-BR')} em potencial receita.
-                                Há risco elevado de perda de clientes por demora na resposta.
-                            </p>
+                            {activeFlow.bottlenecks && activeFlow.bottlenecks.length > 0 ? (
+                                <ul className="diag-list">
+                                    {activeFlow.stages.filter((s: any) => activeFlow.bottlenecks.includes(s.id)).map((s: any) => (
+                                        <li key={s.id}>
+                                            <strong>{s.name}</strong> opera acima da capacidade ({Math.round((s.volume / s.capacity) * 100)}%).
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted">Nenhum gargalo crítico identificado.</p>
+                            )}
                         </div>
 
                         <div className="diag-block">
                             <h4 className="diag-sub"><Lightbulb size={16} /> Recomendações</h4>
                             <div className="rec-box">
-                                <p>1. Revisar critérios de entrada na fase de Negociação para filtrar melhor os leads.</p>
-                                <p>2. Simplificar o processo de aprovação de propostas para reduzir o ciclo.</p>
-                                <p>3. Considerar alocar suporte administrativo temporário para destravar propostas paradas.</p>
+                                {activeFlow.bottlenecks.length > 0 ? (
+                                    <p>Redistribuir carga para aliviar os gargalos identificados ou aumentar capacidade da equipe.</p>
+                                ) : (
+                                    <p>Fluxo operando dentro dos parâmetros normais. Foque em manter o SLA.</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -166,22 +189,5 @@ const Operacao = () => {
         </div>
     );
 };
-
-// Helper component icon
-const UsersIcon = ({ size }: { size: number }) => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-    >
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-);
 
 export default Operacao;

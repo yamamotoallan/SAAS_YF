@@ -22,10 +22,19 @@ import ruleRoutes from './routes/rules';
 
 const app = express();
 
-// Allow multiple origins (comma-separated in FRONTEND_URL env var)
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
-    .split(',')
-    .map(o => o.trim());
+// Always-allowed origins (hard-coded safe defaults)
+const DEFAULT_ORIGINS = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://saas-yf.vercel.app',   // Production Vercel URL
+];
+
+// Merge env-var origins if set (comma-separated)
+const envOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map(o => o.trim()).filter(Boolean)
+    : [];
+
+const allowedOrigins = [...new Set([...DEFAULT_ORIGINS, ...envOrigins])];
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -34,6 +43,7 @@ app.use(cors({
         if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
             callback(null, true);
         } else {
+            console.warn(`CORS: blocked origin → ${origin}`);
             callback(new Error(`CORS: origin ${origin} not allowed`));
         }
     },

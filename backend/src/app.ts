@@ -20,11 +20,24 @@ import logRoutes from './routes/logs';
 
 const app = express();
 
-// Middleware
+// Allow multiple origins (comma-separated in FRONTEND_URL env var)
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+    .split(',')
+    .map(o => o.trim());
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS: origin ${origin} not allowed`));
+        }
+    },
     credentials: true,
 }));
+
 app.use(express.json());
 
 // Health check

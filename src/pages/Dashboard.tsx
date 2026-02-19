@@ -3,7 +3,6 @@ import {
     LayoutDashboard,
     Users,
     AlertTriangle,
-    CheckCircle,
     ArrowRight,
     Activity,
     DollarSign,
@@ -60,15 +59,27 @@ const Dashboard = () => {
                 <div className="card summary-card">
                     <div className="card-icon primary"><DollarSign size={24} /></div>
                     <div className="card-label">Margem Líquida</div>
-                    <div className="card-value">{financial.margin}%</div>
+                    <div className="card-value">
+                        {financial.margin}%
+                        {financial.targetMargin > 0 && (
+                            <span className="text-xs text-muted ml-2 font-normal">
+                                / Meta: {financial.targetMargin}%
+                            </span>
+                        )}
+                    </div>
                     <div className="card-trend text-muted">
                         Receita: {financial.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' })}
+                        {financial.targetRevenue > 0 && (
+                            <span className="block text-xs">
+                                Meta: {financial.targetRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' })}
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className="card summary-card">
                     <div className="card-icon success"><Users size={24} /></div>
                     <div className="card-label">Clima & Pessoas</div>
-                    <div className="card-value">{people.climateScore} <span className="text-sm text-muted">/ 5.0</span></div>
+                    <div className="card-value">{people.climateScore} <span className="text-sm text-muted">/ 100</span></div>
                     <div className="card-trend text-muted">
                         Headcount: {people.headcount}
                     </div>

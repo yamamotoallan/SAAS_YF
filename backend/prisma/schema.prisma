@@ -32,6 +32,8 @@ model Company {
   size      String?  // micro, small, medium, large
   revenue   Float?
   headcount Int?
+  financialTargets Json?    // { revenue: number, margin: number }
+  settings       Json?    // { sla: number, alertThresholds: { margin: number, turnover: number } }
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

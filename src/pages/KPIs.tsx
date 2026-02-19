@@ -247,15 +247,46 @@ const KPIs = () => {
             >
                 <form className="form-grid">
                     <div className="form-group">
-                        <label>Nome do Indicador</label>
-                        <input
-                            type="text"
+                        <label>Tipo de Indicador (Dashboard)</label>
+                        <select
                             className="input-field"
-                            required
                             value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        />
+                            onChange={e => {
+                                const val = e.target.value;
+                                let unit = '%';
+                                let area = 'Financeiro';
+
+                                if (val === 'Faturamento') { unit = 'R$'; area = 'Financeiro'; }
+                                if (val === 'Margem de Lucro') { unit = '%'; area = 'Financeiro'; }
+                                if (val === 'Turnover') { unit = '%'; area = 'Pessoas'; }
+                                if (val === 'Clima Organizacional') { unit = 'score'; area = 'Pessoas'; }
+                                if (val === 'NPS') { unit = 'score'; area = 'Comercial'; }
+
+                                setFormData({ ...formData, name: val, unit, area });
+                            }}
+                        >
+                            <option value="">Outro (Personalizado)</option>
+                            <option value="Faturamento">Faturamento (R$)</option>
+                            <option value="Margem de Lucro">Margem de Lucro (%)</option>
+                            <option value="Turnover">Turnover (%)</option>
+                            <option value="Clima Organizacional">Clima Organizacional (Score)</option>
+                            <option value="NPS">NPS (Score)</option>
+                        </select>
                     </div>
+
+                    {formData.name === '' || !['Faturamento', 'Margem de Lucro', 'Turnover', 'Clima Organizacional', 'NPS'].includes(formData.name) ? (
+                        <div className="form-group">
+                            <label>Nome Personalizado</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                required
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+                    ) : null}
+
                     <div className="form-group">
                         <label>Área</label>
                         <select
@@ -266,6 +297,7 @@ const KPIs = () => {
                             {areas.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
                     </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="form-group">
                             <label>Valor Atual</label>
@@ -288,6 +320,7 @@ const KPIs = () => {
                             />
                         </div>
                     </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="form-group">
                             <label>Unidade</label>
@@ -298,6 +331,7 @@ const KPIs = () => {
                             >
                                 <option value="%">% (Porcentagem)</option>
                                 <option value="R$">R$ (Moeda)</option>
+                                <option value="score">Pontuação (0-100)</option>
                                 <option value="">Numérico (Unidade)</option>
                             </select>
                         </div>
@@ -314,7 +348,7 @@ const KPIs = () => {
                     </div>
                 </form>
             </Modal>
-        </div>
+        </div >
     );
 };
 

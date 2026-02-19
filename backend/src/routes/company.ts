@@ -32,6 +32,8 @@ router.put('/', async (req: AuthRequest, res) => {
                 size: req.body.size,
                 revenue: req.body.revenue !== undefined ? parseFloat(req.body.revenue) : undefined,
                 headcount: req.body.headcount !== undefined ? parseInt(req.body.headcount) : undefined,
+                financialTargets: req.body.financialTargets ? req.body.financialTargets : undefined,
+                settings: req.body.settings ? req.body.settings : undefined,
             },
         });
 

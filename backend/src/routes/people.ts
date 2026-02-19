@@ -51,7 +51,12 @@ router.get('/summary', async (req: AuthRequest, res) => {
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
         const recentHires = active.filter(p => p.hireDate >= oneMonthAgo).length;
 
-        res.json({ headcount, turnover, recentHires, climateScore: 4.2, teams });
+        // Fetch Climate Score from KPIs
+        const kpis = await prisma.kPI.findMany({ where: { companyId: req.companyId } });
+        const climateKpi = kpis.find(k => k.name.includes('Satisfação') || k.name.includes('Clima') || k.name.includes('eNPS'));
+        const climateScore = climateKpi ? (climateKpi.unit === 'score' ? climateKpi.value / 20 : climateKpi.value) : 0;
+
+        res.json({ headcount, turnover, recentHires, climateScore: climateScore || 4.2, teams });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro ao gerar resumo de pessoas' });

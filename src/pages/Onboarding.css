@@ -1,0 +1,392 @@
+/* ──────────────────────────────────────────────────────────
+   ONBOARDING CONTAINER
+────────────────────────────────────────────────────────── */
+.onboarding-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle background glow blobs */
+.onboarding-container::before,
+.onboarding-container::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.onboarding-container::before {
+    width: 400px;
+    height: 400px;
+    background: #6366f1;
+    top: -100px;
+    left: -100px;
+}
+
+.onboarding-container::after {
+    width: 350px;
+    height: 350px;
+    background: #0ea5e9;
+    bottom: -80px;
+    right: -80px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   CARD
+────────────────────────────────────────────────────────── */
+.onboarding-card {
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    width: 100%;
+    max-width: 520px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+/* ──────────────────────────────────────────────────────────
+   PROGRESS BAR
+────────────────────────────────────────────────────────── */
+.ob-progress-track {
+    height: 4px;
+    background: #e2e8f0;
+    position: relative;
+}
+
+.ob-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #0ea5e9);
+    border-radius: 0 4px 4px 0;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ──────────────────────────────────────────────────────────
+   STEP PILLS NAV
+────────────────────────────────────────────────────────── */
+.ob-steps-nav {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.ob-step-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition: all 0.25s ease;
+}
+
+.ob-step-pill--idle {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px solid #e2e8f0;
+}
+
+.ob-step-pill--active {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.ob-step-pill--done {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+/* ──────────────────────────────────────────────────────────
+   HEADER
+────────────────────────────────────────────────────────── */
+.onboarding-header {
+    padding: 1.5rem 2rem 0.75rem;
+    text-align: center;
+}
+
+.ob-step-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+}
+
+.onboarding-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #0f172a;
+}
+
+.onboarding-header p {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+/* ──────────────────────────────────────────────────────────
+   CONTENT
+────────────────────────────────────────────────────────── */
+.onboarding-content {
+    padding: 1.25rem 2rem;
+}
+
+.step-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+}
+
+.ob-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+}
+
+.textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.ob-flow-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8rem;
+    color: #0369a1;
+    line-height: 1.4;
+}
+
+/* ──────────────────────────────────────────────────────────
+   FOOTER
+────────────────────────────────────────────────────────── */
+.onboarding-footer {
+    padding: 1rem 2rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: #64748b;
+    border: none;
+    padding: 0.5rem 0.875rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.btn-ghost:disabled {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ob-skip {
+    font-size: 0.78rem;
+    opacity: 0.7;
+}
+
+.ob-skip:hover:not(:disabled) {
+    opacity: 1;
+}
+
+.spin {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ──────────────────────────────────────────────────────────
+   DONE SCREEN
+────────────────────────────────────────────────────────── */
+.onboarding-done {
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+    max-width: 380px;
+    width: 100%;
+    padding: 3rem 2.5rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.done-ring {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: white;
+    animation: pulseRing 1.2s ease-out infinite;
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
+}
+
+.done-star {
+    animation: starSpin 2s linear infinite;
+}
+
+@keyframes starSpin {
+    from {
+        transform: rotate(0);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulseRing {
+    0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 18px rgba(99, 102, 241, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    }
+}
+
+.done-bar {
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 1.5rem;
+}
+
+.done-bar-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #6366f1, #0ea5e9);
+    border-radius: 4px;
+    animation: fillBar 2s linear forwards;
+}
+
+@keyframes fillBar {
+    to {
+        width: 100%;
+    }
+}
+
+/* ──────────────────────────────────────────────────────────
+   TOAST
+────────────────────────────────────────────────────────── */
+.ob-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.625rem 1.25rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 9999;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.ob-toast--success {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.ob-toast--error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* ──────────────────────────────────────────────────────────
+   ANIMATE FADE (step transition)
+────────────────────────────────────────────────────────── */
+.animate-fade {
+    animation: fadeSlideIn 0.3s ease forwards;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

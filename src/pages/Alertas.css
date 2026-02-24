@@ -1,0 +1,432 @@
+/* ──────────────────────────────────────────────────────────
+   ALERT FEED — Priority-grouped
+────────────────────────────────────────────────────────── */
+.al-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ── Priority groups ──────────────────────────────────── */
+.al-group {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.al-group-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: var(--color-surface);
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    text-align: left;
+    color: var(--color-text-primary);
+    transition: background 0.15s;
+}
+
+.al-group-header:hover {
+    background: var(--color-background);
+}
+
+.al-group-label {
+    flex: 1;
+}
+
+/* Priority dot indicators */
+.al-group-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dot-critical {
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+    animation: pulseDot 1.4s ease-in-out infinite;
+}
+
+.dot-high {
+    background: #f97316;
+}
+
+.dot-medium {
+    background: #eab308;
+}
+
+.dot-low {
+    background: #94a3b8;
+}
+
+@keyframes pulseDot {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.35);
+    }
+}
+
+/* ── Alert cards ──────────────────────────────────────── */
+.alert-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    transition: background 0.15s;
+}
+
+.alert-card:hover {
+    background: var(--color-background);
+}
+
+/* Left border accent per priority */
+.alert-card.priority-critical {
+    border-left: 3px solid #ef4444;
+}
+
+.alert-card.priority-high {
+    border-left: 3px solid #f97316;
+}
+
+.alert-card.priority-medium {
+    border-left: 3px solid #eab308;
+}
+
+.alert-card.priority-low {
+    border-left: 3px solid #94a3b8;
+}
+
+.alert-icon-area {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.alert-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.alert-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.25rem;
+}
+
+.alert-title {
+    font-size: 0.925rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.alert-desc {
+    font-size: 0.825rem;
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+    margin: 0 0 0.375rem;
+}
+
+.alert-meta {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.alert-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    flex-shrink: 0;
+}
+
+/* ── Urgent counter badge on header ───────────────────── */
+.al-urgent-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    animation: pulseDot 1.4s ease-in-out infinite;
+}
+
+/* ── Bell pulse ───────────────────────────────────────── */
+.al-bell-pulse {
+    animation: bellShake 2s ease-in-out infinite;
+}
+
+@keyframes bellShake {
+
+    0%,
+    100% {
+        transform: rotate(0);
+    }
+
+    10%,
+    30% {
+        transform: rotate(-12deg);
+    }
+
+    20%,
+    40% {
+        transform: rotate(12deg);
+    }
+
+    50% {
+        transform: rotate(0);
+    }
+}
+
+/* ── Tab badge dot ────────────────────────────────────── */
+.tab-badge-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: #ef4444;
+    border-radius: 50%;
+    margin-left: 4px;
+    animation: pulseDot 1.4s ease-in-out infinite;
+    vertical-align: middle;
+}
+
+/* ── Toast ────────────────────────────────────────────── */
+.al-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: white;
+    padding: 0.625rem 1.5rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 9999;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+    white-space: nowrap;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* ── Spin for scan button ─────────────────────────────── */
+.spin {
+    animation: spin360 0.8s linear infinite;
+}
+
+@keyframes spin360 {
+    from {
+        transform: rotate(0);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ══ RULES TAB ════════════════════════════════════════════ */
+.al-rules-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 0.75rem 1rem;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 10px;
+    font-size: 0.825rem;
+    color: #0369a1;
+    margin-bottom: 1rem;
+}
+
+.al-rules-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.al-rule-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.al-rule-card.rule-enabled {
+    border-color: #c7d2fe;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+}
+
+.al-rule-card.rule-disabled {
+    opacity: 0.55;
+}
+
+.al-rule-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.al-rule-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.al-rule-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.al-rule-desc {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    margin: 2px 0 6px;
+    line-height: 1.4;
+}
+
+.al-rule-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Toggle switch */
+.al-toggle {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.al-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.al-toggle-track {
+    display: block;
+    width: 40px;
+    height: 22px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    transition: background 0.25s;
+    position: relative;
+}
+
+.al-toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.25s;
+}
+
+.al-toggle input:checked+.al-toggle-track {
+    background: #6366f1;
+}
+
+.al-toggle input:checked+.al-toggle-track::after {
+    transform: translateX(18px);
+}
+
+/* Legacy classes kept for compatibility */
+.alerts-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.btn-icon-action {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-icon-action.success {
+    color: var(--color-success);
+}
+
+.btn-icon-action.success:hover {
+    background: #dcfce7;
+    border-color: #86efac;
+}
+
+.btn-icon-action.danger {
+    color: var(--color-danger);
+}
+
+.btn-icon-action.danger:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}

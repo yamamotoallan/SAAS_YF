@@ -1,0 +1,281 @@
+.log-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.log-timeline {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.log-entry {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    position: relative;
+    align-items: flex-start;
+}
+
+.log-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.log-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.log-main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.log-action-badge {
+    font-weight: 600;
+    font-size: 0.8125rem;
+}
+
+.log-module-badge {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 1px 8px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.log-entity {
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.log-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.log-line {
+    position: absolute;
+    left: 15px;
+    top: calc(var(--spacing-md) + 32px);
+    width: 1px;
+    height: calc(100% - 32px);
+    background: var(--color-border);
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Config Section Layout ─────────────────────────────── */
+.config-section-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .config-section-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Config Card ──────────────────────────────────────── */
+.config-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.config-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.config-card-header .text-h3 {
+    margin: 0;
+}
+
+.config-card-icon {
+    color: var(--color-secondary);
+    flex-shrink: 0;
+}
+
+/* ── Input with prefix/suffix ────────────────────────── */
+.input-with-prefix,
+.input-with-suffix {
+    display: flex;
+    align-items: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.input-with-prefix:focus-within,
+.input-with-suffix:focus-within {
+    border-color: var(--color-secondary);
+}
+
+.input-prefix,
+.input-suffix {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: var(--color-background);
+    flex-shrink: 0;
+    border-right: 1px solid var(--color-border);
+}
+
+.input-suffix {
+    border-right: none;
+    border-left: 1px solid var(--color-border);
+}
+
+.input-inner {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.55rem 0.75rem;
+    font-family: inherit;
+    font-size: 0.875rem;
+    background: transparent;
+    color: var(--color-text-primary);
+    min-width: 0;
+}
+
+/* ── Threshold preview ───────────────────────────────── */
+.threshold-preview {
+    margin-top: 1rem;
+}
+
+.threshold-chips-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.threshold-chip {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+}
+
+.threshold-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-secondary);
+    color: white;
+}
+
+.threshold-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    line-height: 1;
+}
+
+.threshold-value {
+    display: block;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    line-height: 1.2;
+}
+
+/* ── Inline Toast ────────────────────────────────────── */
+.config-toast {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.14);
+    animation: slideIn 0.25s ease;
+}
+
+.config-toast.success {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.config-toast.error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(60px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

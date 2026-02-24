@@ -1,0 +1,257 @@
+.reports-container {
+    padding-bottom: 4rem;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+}
+
+.report-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    background: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.report-preview {
+    background: #525659;
+    padding: 2rem;
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    overflow: auto;
+}
+
+/* A4 Paper Simulation */
+.a4-paper {
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    color: var(--text-primary);
+}
+
+.report-title-page {
+    text-align: center;
+    padding-top: 60mm;
+}
+
+.report-logo {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.report-meta {
+    margin-top: 4rem;
+    color: var(--text-muted);
+}
+
+.print-only {
+    display: none;
+}
+
+
+.page-break {
+    page-break-before: always;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .reports-container,
+    .reports-header,
+    .sidebar {
+        display: none !important;
+    }
+
+    .a4-paper,
+    .a4-paper * {
+        visibility: visible;
+    }
+
+    .a4-paper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 15mm;
+        box-shadow: none;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+}
+
+/* ── CRM Won / Lost Strip ─────────────────────────────── */
+.crm-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.crm-strip-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+}
+
+.crm-strip-cell.won {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.crm-strip-cell.lost {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.crm-strip-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.crm-strip-label {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.crm-strip-value-secondary {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* ── KPI Alert Box ────────────────────────────────────── */
+.kpi-alert-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #713f12;
+}
+
+/* ── Empty State Preview ──────────────────────────────── */
+.report-empty-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 2rem;
+    background: var(--color-surface);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.empty-preview-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-secondary);
+}
+
+.empty-preview-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.empty-preview-desc {
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.empty-preview-pages {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.preview-page-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+/* ── Print safety ─────────────────────────────────────── */
+@media print {
+    .crm-strip-cell.won {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .crm-strip-cell.lost {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .kpi-alert-box {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .badge-success,
+    .badge-warning,
+    .badge-danger {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

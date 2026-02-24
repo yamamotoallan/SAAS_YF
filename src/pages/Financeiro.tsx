@@ -1,0 +1,446 @@
+import { useState, useEffect } from 'react';
+import {
+    DollarSign,
+    TrendingDown,
+    TrendingUp,
+    PieChart,
+    ArrowUpRight,
+    Download,
+    Plus,
+    Trash2,
+    Edit2,
+    AlertTriangle,
+    BarChart3
+} from 'lucide-react';
+import { api } from '../services/api';
+import type { FinancialEntry } from '../types/api';
+import { downloadCSV } from '../utils/csvUtils';
+import Modal from '../components/Modal/Modal';
+import './Financeiro.css';
+
+const Financeiro = () => {
+    // Data State
+    const [entries, setEntries] = useState<any[]>([]);
+    const [summary, setSummary] = useState<any>({
+        revenue: 0,
+        expenses: 0,
+        netIncome: 0,
+        runway: 0,
+        burnRate: 0
+    });
+    const [projections, setProjections] = useState<any[]>([]);
+
+    // UI State
+    const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState('month');
+    const [page, setPage] = useState(1);
+    const [meta, setMeta] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [selectedEntry, setSelectedEntry] = useState<any>(null);
+
+    // Form State
+    const [formData, setFormData] = useState({
+        type: 'EXPENSE' as FinancialEntry['type'],
+        category: 'Operacional',
+        amount: 0,
+        description: '',
+        date: new Date().toISOString().split('T')[0]
+    });
+
+    const categories = [
+        'Vendas', 'Serviços', 'Operacional', 'Marketing', 'Pessoal', 'Tecnologia', 'Impostos', 'Outros'
+    ];
+
+    useEffect(() => {
+        loadData();
+    }, [period, page]);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [entriesRes, summaryData, projectionsData] = await Promise.all([
+                api.financial.list({ period, page: page.toString(), limit: '50' }),
+                api.financial.summary(),
+                api.financial.projection()
+            ]);
+            setEntries(entriesRes.data);
+            setMeta(entriesRes.meta);
+            setSummary(summaryData);
+            setProjections(projectionsData);
+        } catch (error) {
+            console.error('Failed to load financial data', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            if (selectedEntry) {
+                await api.financial.update(selectedEntry.id, formData);
+            } else {
+                await api.financial.create(formData);
+            }
+            await loadData();
+            closeModal();
+        } catch (error) {
+            alert('Erro ao salvar lançamento');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Excluir este lançamento?')) return;
+        try {
+            await api.financial.delete(id);
+            await loadData();
+        } catch (error) {
+            alert('Erro ao excluir');
+        }
+    };
+
+    const openModal = (entry: any = null) => {
+        if (entry) {
+            setSelectedEntry(entry);
+            setFormData({
+                type: entry.type,
+                category: entry.category,
+                amount: entry.amount,
+                description: entry.description,
+                date: entry.date.split('T')[0]
+            });
+        } else {
+            setSelectedEntry(null);
+            setFormData({
+                type: 'EXPENSE',
+                category: 'Operacional',
+                amount: 0,
+                description: '',
+                date: new Date().toISOString().split('T')[0]
+            });
+        }
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedEntry(null);
+    };
+
+    const exportCSV = () => {
+        downloadCSV(
+            entries,
+            [
+                { key: 'date', label: 'Data', format: v => new Date(v).toLocaleDateString('pt-BR') },
+                { key: 'type', label: 'Tipo', format: v => v === 'revenue' || v === 'INCOME' ? 'Receita' : 'Despesa' },
+                { key: 'category', label: 'Categoria' },
+                { key: 'description', label: 'Descrição' },
+                { key: 'value', label: 'Valor (R$)', format: v => Number(v || 0).toFixed(2).replace('.', ',') },
+            ],
+            `financeiro_${period}`
+        );
+    };
+
+    if (loading) return <div className="p-8 text-center">Carregando dados financeiros...</div>;
+
+    const margin = summary.revenue > 0 ? ((summary.netIncome / summary.revenue) * 100).toFixed(1) : 0;
+
+    return (
+        <div className="container animate-fade">
+            <header className="page-header">
+                <div>
+                    <h1 className="text-h2">Gestão Financeira</h1>
+                    <p className="text-small">Controle de receitas, despesas e fluxo de caixa</p>
+                </div>
+                <div className="header-actions">
+                    <div className="period-selector">
+                        <button className={`selector-btn ${period === 'month' ? 'active' : ''}`} onClick={() => setPeriod('month')}>Mês</button>
+                        <button className={`selector-btn ${period === 'quarter' ? 'active' : ''}`} onClick={() => setPeriod('quarter')}>Trimestre</button>
+                        <button className={`selector-btn ${period === 'year' ? 'active' : ''}`} onClick={() => setPeriod('year')}>Ano</button>
+                    </div>
+                    <button className="btn btn-secondary" onClick={exportCSV}>
+                        <Download size={16} /> Exportar
+                    </button>
+                    <button className="btn btn-primary" onClick={() => openModal()}>
+                        <Plus size={16} /> Novo Lançamento
+                    </button>
+                </div>
+            </header>
+
+            {/* Summary Cards */}
+            <div className="finance-summary-grid">
+                <div className="finance-card primary">
+                    <div className="card-icon"><DollarSign size={24} /></div>
+                    <div className="card-label">Receita (Mês)</div>
+                    <div className="card-value">R$ {Number(summary.revenue).toLocaleString('pt-BR')}</div>
+                    <div className="card-trend positive">
+                        <ArrowUpRight size={16} /> Entradas confirmadas
+                    </div>
+                </div>
+                <div className="finance-card">
+                    <div className="card-icon warning"><TrendingDown size={24} /></div>
+                    <div className="card-label">Despesas (Mês)</div>
+                    <div className="card-value">R$ {Number(summary.expenses).toLocaleString('pt-BR')}</div>
+                    <div className="card-trend negative">
+                        <ArrowUpRight size={16} /> Saídas realizadas
+                    </div>
+                </div>
+                <div className="finance-card">
+                    <div className="card-icon success"><PieChart size={24} /></div>
+                    <div className="card-label">Margem Líquida</div>
+                    <div className="card-value">{margin}%</div>
+                    <div className={`card-trend ${Number(margin) > 20 ? 'positive' : 'negative'}`}>
+                        Meta: {'>'} 20%
+                    </div>
+                </div>
+                <div className="finance-card">
+                    <div className="card-icon info"><DollarSign size={24} /></div>
+                    <div className="card-label">Caixa Disponível</div>
+                    <div className="card-value">R$ {Number(summary.cashAvailable).toLocaleString('pt-BR')}</div>
+                    <div className="card-trend neutral">
+                        Runway est.: ~{summary.operatingMonths} meses
+                    </div>
+                </div>
+            </div>
+
+            {/* Anomalies Alert */}
+            {(summary.anomalies || []).length > 0 && (
+                <div className="card bg-danger-light border-danger mb-lg p-4 flex items-center gap-4">
+                    <div className="text-danger"><AlertTriangle size={32} /></div>
+                    <div>
+                        <h4 className="font-bold text-danger">Anomalias Financeiras Detectadas</h4>
+                        <p className="text-sm">Os seguintes custos estão {'>'}30% acima da média histórica:</p>
+                        <div className="flex gap-4 mt-2">
+                            {summary.anomalies.map((a: any, i: number) => (
+                                <span key={i} className="badge badge-danger">
+                                    {a.category}: R$ {a.current.toLocaleString('pt-BR')} (Média: R$ {a.average.toLocaleString('pt-BR')})
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="content-grid">
+                {/* Entries List */}
+                <section className="card col-span-2">
+                    <div className="section-header-row mb-4">
+                        <h3 className="text-h3">Lançamentos do Período</h3>
+                        <div className="text-sm text-muted">{entries.length} registros</div>
+                    </div>
+
+                    {entries.length === 0 ? (
+                        <div className="p-8 text-center text-muted">Nenhum lançamento neste período.</div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="border-b text-muted text-sm">
+                                        <th className="p-2">Data</th>
+                                        <th className="p-2">Descrição</th>
+                                        <th className="p-2">Categoria</th>
+                                        <th className="p-2">Tipo</th>
+                                        <th className="p-2 text-right">Valor</th>
+                                        <th className="p-2 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {entries.map(entry => (
+                                        <tr key={entry.id} className="border-b hover:bg-gray-50">
+                                            <td className="p-2 text-sm">{new Date(entry.date).toLocaleDateString()}</td>
+                                            <td className="p-2 font-medium">{entry.description}</td>
+                                            <td className="p-2 text-sm">
+                                                <span className="badge badge-neutral">{entry.category}</span>
+                                            </td>
+                                            <td className="p-2">
+                                                {entry.type === 'INCOME' ?
+                                                    <span className="text-success flex items-center gap-1"><TrendingUp size={14} /> Receita</span> :
+                                                    <span className="text-danger flex items-center gap-1"><TrendingDown size={14} /> Despesa</span>
+                                                }
+                                            </td>
+                                            <td className={`p-2 text-right font-mono ${entry.type === 'INCOME' ? 'text-success' : 'text-danger'}`}>
+                                                {entry.type === 'INCOME' ? '+' : '-'} R$ {Number(entry.amount).toLocaleString('pt-BR')}
+                                            </td>
+                                            <td className="p-2 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button className="btn-icon-sm" onClick={() => openModal(entry)}><Edit2 size={14} /></button>
+                                                    <button className="btn-icon-sm text-danger" onClick={() => handleDelete(entry.id)}><Trash2 size={14} /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            {meta && meta.totalPages > 1 && (
+                                <div className="pagination p-4 border-t flex justify-between items-center">
+                                    <span className="text-small text-muted">
+                                        Página {page} de {meta.totalPages} ({meta.total} registros)
+                                    </span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            disabled={page === 1}
+                                            onClick={() => setPage(p => p - 1)}
+                                        >
+                                            Anterior
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            disabled={page === meta.totalPages}
+                                            onClick={() => setPage(p => p + 1)}
+                                        >
+                                            Próxima
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </section>
+
+                {/* Projections View */}
+                <aside className="space-y-lg">
+                    <section className="card">
+                        <div className="section-header-row mb-4">
+                            <h3 className="text-h3 flex items-center gap-2"><BarChart3 size={20} /> Projeção de Caixa</h3>
+                        </div>
+                        <div className="chart-placeholder">
+                            <div className="bar-chart">
+                                {projections.map((p: any, i: number) => (
+                                    <div key={i} className="bar-group">
+                                        <div
+                                            className="bar projected"
+                                            style={{ height: `${Math.min(100, (p.balance / (summary.cashAvailable * 2)) * 100)}%` }}
+                                            title={`R$ ${p.balance.toLocaleString('pt-BR')}`}
+                                        ></div>
+                                        <span className="bar-label">{p.month}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="mt-4 text-xs text-muted">
+                            * Projeção baseada em lançamentos recorrentes e burn rate médio.
+                        </div>
+                    </section>
+
+                    <section className="card">
+                        <div className="section-header-row mb-4">
+                            <h3 className="text-h3">Distribuição de Custos</h3>
+                        </div>
+                        <div className="cost-list">
+                            {categories.filter(c => c !== 'Vendas' && c !== 'Serviços').map(cat => {
+                                const val = entries.filter(e => e.category === cat && (e.type === 'cost' || e.type === 'EXPENSE')).reduce((s, e) => s + Number(e.amount || 0), 0);
+                                if (val === 0) return null;
+                                const percent = summary.expenses > 0 ? Math.round((val / summary.expenses) * 100) : 0;
+                                return (
+                                    <div key={cat} className="cost-row">
+                                        <div className="cost-info">
+                                            <span className="cost-name">{cat}</span>
+                                            <div className="cost-bar-bg">
+                                                <div className="cost-bar-fill" style={{ width: `${percent}%` }}></div>
+                                            </div>
+                                        </div>
+                                        <div className="cost-values">
+                                            <span className="cost-amount">R$ {val.toLocaleString('pt-BR')}</span>
+                                            <span className="cost-percent">{percent}%</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                </aside>
+            </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                title={selectedEntry ? "Editar Lançamento" : "Novo Lançamento"}
+                footer={
+                    <>
+                        <button className="btn btn-secondary" onClick={closeModal}>Cancelar</button>
+                        <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+                            {submitting ? 'Salvando...' : 'Salvar'}
+                        </button>
+                    </>
+                }
+            >
+                <form className="form-grid">
+                    <div className="form-group">
+                        <label>Tipo</label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    checked={formData.type === 'INCOME'}
+                                    onChange={() => setFormData({ ...formData, type: 'INCOME' })}
+                                />
+                                Receita
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    checked={formData.type === 'EXPENSE'}
+                                    onChange={() => setFormData({ ...formData, type: 'EXPENSE' })}
+                                />
+                                Despesa
+                            </label>
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Descrição</label>
+                        <input
+                            type="text"
+                            className="input-field"
+                            required
+                            value={formData.description}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Valor (R$)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            required
+                            min="0"
+                            step="0.01"
+                            value={formData.amount}
+                            onChange={e => setFormData({ ...formData, amount: Number(e.target.value) })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Categoria</label>
+                        <select
+                            className="input-field"
+                            value={formData.category}
+                            onChange={e => setFormData({ ...formData, category: e.target.value })}
+                        >
+                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Data</label>
+                        <input
+                            type="date"
+                            className="input-field"
+                            required
+                            value={formData.date}
+                            onChange={e => setFormData({ ...formData, date: e.target.value })}
+                        />
+                    </div>
+                </form>
+            </Modal>
+        </div >
+    );
+};
+
+export default Financeiro;

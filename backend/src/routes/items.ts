@@ -54,7 +54,7 @@ router.get('/', async (req: AuthRequest, res) => {
 router.get('/:id', async (req: AuthRequest, res) => {
     try {
         const item = await prisma.operatingItem.findUnique({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             include: {
                 client: true,
                 responsible: true,
@@ -123,7 +123,7 @@ router.put('/:id', async (req: AuthRequest, res) => {
     try {
         const { title, type, value, priority, status, clientId, responsibleId, slaDueAt } = req.body;
         const item = await prisma.operatingItem.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             data: {
                 title,
                 type,
@@ -155,13 +155,13 @@ router.patch('/:id/move', async (req: AuthRequest, res) => {
         if (!stageId) { res.status(400).json({ error: 'stageId é obrigatório' }); return; }
 
         const currentItem = await prisma.operatingItem.findUnique({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
         });
 
         if (!currentItem) { res.status(404).json({ error: 'Item não encontrado' }); return; }
 
         const item = await prisma.operatingItem.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             data: { stageId },
             include: { client: true, responsible: true, stage: true, flow: true },
         });
@@ -194,7 +194,7 @@ router.patch('/:id/close', async (req: AuthRequest, res) => {
         }
 
         const item = await prisma.operatingItem.findUnique({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             include: { client: true, flow: true },
         });
         if (!item) { res.status(404).json({ error: 'Item não encontrado' }); return; }
@@ -205,7 +205,7 @@ router.patch('/:id/close', async (req: AuthRequest, res) => {
 
         // Update item status
         const updated = await prisma.operatingItem.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             data: { status, closedAt: new Date() },
             include: { client: true, responsible: true, stage: true, flow: true },
         });
@@ -262,7 +262,6 @@ router.patch('/:id/close', async (req: AuthRequest, res) => {
                         : `A oportunidade com ${item.client?.name || 'cliente desconhecido'} foi encerrada como perdida.`,
                     type: 'operational',
                     priority: 'high',
-                    module: 'crm',
                     status: 'active',
                     companyId: req.companyId!,
                 },
@@ -289,7 +288,7 @@ router.patch('/:id/close', async (req: AuthRequest, res) => {
 // DELETE /api/items/:id
 router.delete('/:id', checkRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-        await prisma.operatingItem.delete({ where: { id: req.params.id } });
+        await prisma.operatingItem.delete({ where: { id: req.params.id as string } });
 
         // Sync Metrics
         await GoalsService.syncMetrics(req.companyId!, METRIC_TYPES.SALES_WON_COUNT_MONTH);

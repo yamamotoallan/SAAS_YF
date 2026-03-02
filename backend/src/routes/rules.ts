@@ -10,7 +10,7 @@ router.use(authMiddleware);
 router.get('/', async (req: AuthRequest, res) => {
     try {
         const rules = await prisma.businessRule.findMany({
-            where: { companyId: req.companyId },
+            where: { companyId: req.companyId as string },
             orderBy: { createdAt: 'desc' },
         });
         res.json(rules);
@@ -49,12 +49,38 @@ router.post('/', checkRole(['admin']), async (req: AuthRequest, res) => {
     }
 });
 
+// PUT /api/rules/:id (Admin only)
+router.put('/:id', checkRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+        const { id } = req.params;
+        const before = await prisma.businessRule.findFirst({
+            where: { id: id as string, companyId: req.companyId as string },
+        });
+        if (!before) { res.status(404).json({ error: 'Regra não encontrada' }); return; }
+
+        const { name, description, entity, metric, operator, value, actionType, priority, isActive } = req.body;
+        const updated = await prisma.businessRule.update({
+            where: { id: id as string },
+            data: {
+                name, description, entity, metric, operator,
+                value: value !== undefined ? Number(value) : undefined,
+                actionType, priority,
+                isActive: isActive !== undefined ? isActive : undefined,
+            },
+        });
+        res.json(updated);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao atualizar regra' });
+    }
+});
+
 // DELETE /api/rules/:id (Admin only)
 router.delete('/:id', checkRole(['admin']), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
         await prisma.businessRule.deleteMany({
-            where: { id, companyId: req.companyId },
+            where: { id: id as string, companyId: req.companyId as string },
         });
         res.status(204).send();
     } catch (err) {

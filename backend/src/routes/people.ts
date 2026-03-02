@@ -108,7 +108,7 @@ router.get('/summary', async (req: AuthRequest, res) => {
 // POST /api/people
 router.post('/', async (req: AuthRequest, res) => {
     try {
-        const { name, role, department, hireDate, salary, status } = req.body;
+        const { name, role, department, hireDate, salary, status, email, phone } = req.body;
         if (!name || !role || !department) {
             res.status(400).json({ error: 'Nome, cargo e departamento são obrigatórios' });
             return;
@@ -117,6 +117,8 @@ router.post('/', async (req: AuthRequest, res) => {
         const person = await prisma.person.create({
             data: {
                 name, role, department,
+                email: email || null,
+                phone: phone || null,
                 hireDate: new Date(hireDate || Date.now()),
                 salary: salary ? parseFloat(salary) : null,
                 status: status || 'active',
@@ -124,11 +126,25 @@ router.post('/', async (req: AuthRequest, res) => {
             },
         });
 
-        logActivity({ action: 'created', module: 'people', entityId: person.id, entityName: `${name} - ${role}`, details: { department }, companyId: req.companyId!, userId: req.userId });
+        logActivity({ action: 'created', module: 'people', entityId: person.id, entityName: `${name} - ${role}`, details: { department, email }, companyId: req.companyId!, userId: req.userId });
         res.status(201).json(person);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro ao criar colaborador' });
+    }
+});
+
+// GET /api/people/:id
+router.get('/:id', async (req: AuthRequest, res) => {
+    try {
+        const person = await prisma.person.findFirst({
+            where: { id: req.params.id as string, companyId: req.companyId },
+        });
+        if (!person) { res.status(404).json({ error: 'Colaborador não encontrado' }); return; }
+        res.json(person);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao buscar colaborador' });
     }
 });
 
@@ -142,6 +158,9 @@ router.put('/:id', async (req: AuthRequest, res) => {
             where: { id: req.params.id as string },
             data: {
                 name: req.body.name, role: req.body.role, department: req.body.department,
+                email: req.body.email !== undefined ? req.body.email : undefined,
+                phone: req.body.phone !== undefined ? req.body.phone : undefined,
+                hireDate: req.body.hireDate ? new Date(req.body.hireDate) : undefined,
                 salary: req.body.salary !== undefined ? parseFloat(req.body.salary) : undefined,
                 status: req.body.status,
             },

@@ -83,9 +83,9 @@ router.get('/', async (req: AuthRequest, res) => {
 // GET /api/clients/:id/intelligence
 router.get('/:id/intelligence', async (req: AuthRequest, res) => {
     try {
-        const clientId = req.params.id;
+        const clientId = req.params.id as string;
         const client = await prisma.client.findFirst({
-            where: { id: clientId, companyId: req.companyId },
+            where: { id: clientId, companyId: req.companyId as string },
             include: {
                 items: {
                     include: { flow: true, stage: true }
@@ -157,7 +157,7 @@ router.get('/:id/intelligence', async (req: AuthRequest, res) => {
 router.get('/:id', async (req: AuthRequest, res) => {
     try {
         const client = await prisma.client.findFirst({
-            where: { id: req.params.id, companyId: req.companyId },
+            where: { id: req.params.id as string, companyId: req.companyId as string },
             include: { items: { include: { flow: true, stage: true } } },
         });
 
@@ -202,12 +202,12 @@ router.post('/', async (req: AuthRequest, res) => {
 // PUT /api/clients/:id
 router.put('/:id', async (req: AuthRequest, res) => {
     try {
-        const before = await prisma.client.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
+        const before = await prisma.client.findFirst({ where: { id: req.params.id as string, companyId: req.companyId as string } });
         if (!before) { res.status(404).json({ error: 'Cliente não encontrado' }); return; }
 
         const { name, type, email, phone, segment, status } = req.body;
         await prisma.client.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             data: { name, type, email, phone, segment, status }
         });
         const updated = await prisma.client.findUnique({ where: { id: req.params.id as string } });
@@ -226,8 +226,8 @@ router.put('/:id', async (req: AuthRequest, res) => {
 // DELETE /api/clients/:id
 router.delete('/:id', checkRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-        const client = await prisma.client.findFirst({ where: { id: req.params.id as string, companyId: req.companyId } });
-        await prisma.client.deleteMany({ where: { id: req.params.id as string, companyId: req.companyId } });
+        const client = await prisma.client.findFirst({ where: { id: req.params.id as string, companyId: req.companyId as string } });
+        await prisma.client.deleteMany({ where: { id: req.params.id as string, companyId: req.companyId as string } });
 
         logActivity({ action: 'deleted', module: 'client', entityId: req.params.id as string, entityName: client?.name || req.params.id as string, companyId: req.companyId!, userId: req.userId });
 

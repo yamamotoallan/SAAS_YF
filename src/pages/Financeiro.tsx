@@ -16,9 +16,15 @@ import { api } from '../services/api';
 import type { FinancialEntry } from '../types/api';
 import { downloadCSV } from '../utils/csvUtils';
 import Modal from '../components/Modal/Modal';
+import ConfirmDialog from '../components/Modal/ConfirmDialog';
+import Pagination from '../components/Layout/Pagination';
+import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
+import { useToast } from '../components/Layout/ToastContext';
 import './Financeiro.css';
 
 const Financeiro = () => {
+    const { toast } = useToast();
+
     // Data State
     const [entries, setEntries] = useState<any[]>([]);
     const [summary, setSummary] = useState<any>({
@@ -38,6 +44,7 @@ const Financeiro = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<any>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -86,20 +93,24 @@ const Financeiro = () => {
             }
             await loadData();
             closeModal();
+            toast(selectedEntry ? 'Lançamento atualizado!' : 'Lançamento criado!', 'success');
         } catch (error) {
-            alert('Erro ao salvar lançamento');
+            toast('Erro ao salvar lançamento', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Excluir este lançamento?')) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await api.financial.delete(id);
+            await api.financial.delete(deleteTarget);
             await loadData();
+            toast('Lançamento excluído', 'success');
         } catch (error) {
-            alert('Erro ao excluir');
+            toast('Erro ao excluir', 'error');
+        } finally {
+            setDeleteTarget(null);
         }
     };
 
@@ -145,7 +156,7 @@ const Financeiro = () => {
         );
     };
 
-    if (loading) return <div className="p-8 text-center">Carregando dados financeiros...</div>;
+    if (loading) return <div className="container animate-fade"><LoadingSkeleton type="table" rows={8} /></div>;
 
     const margin = summary.revenue > 0 ? ((summary.netIncome / summary.revenue) * 100).toFixed(1) : 0;
 
@@ -268,7 +279,7 @@ const Financeiro = () => {
                                             <td className="p-2 text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <button className="btn-icon-sm" onClick={() => openModal(entry)}><Edit2 size={14} /></button>
-                                                    <button className="btn-icon-sm text-danger" onClick={() => handleDelete(entry.id)}><Trash2 size={14} /></button>
+                                                    <button className="btn-icon-sm text-danger" onClick={() => setDeleteTarget(entry.id)}><Trash2 size={14} /></button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -277,27 +288,12 @@ const Financeiro = () => {
                             </table>
 
                             {meta && meta.totalPages > 1 && (
-                                <div className="pagination p-4 border-t flex justify-between items-center">
-                                    <span className="text-small text-muted">
-                                        Página {page} de {meta.totalPages} ({meta.total} registros)
-                                    </span>
-                                    <div className="flex gap-2">
-                                        <button
-                                            className="btn btn-secondary btn-sm"
-                                            disabled={page === 1}
-                                            onClick={() => setPage(p => p - 1)}
-                                        >
-                                            Anterior
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary btn-sm"
-                                            disabled={page === meta.totalPages}
-                                            onClick={() => setPage(p => p + 1)}
-                                        >
-                                            Próxima
-                                        </button>
-                                    </div>
-                                </div>
+                                <Pagination
+                                    page={page}
+                                    totalPages={meta.totalPages}
+                                    total={meta.total}
+                                    onPageChange={setPage}
+                                />
                             )}
                         </div>
                     )}
@@ -439,6 +435,16 @@ const Financeiro = () => {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmDialog
+                isOpen={!!deleteTarget}
+                title="Excluir Lançamento"
+                message="Tem certeza que deseja excluir este lançamento financeiro? Esta ação não pode ser desfeita."
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div >
     );
 };

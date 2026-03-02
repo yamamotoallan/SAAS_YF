@@ -70,10 +70,11 @@ model Client {
 }
 
 model OperatingFlow {
-  id        String   @id @default(uuid())
-  name      String
-  type      String   // sales, service, project, financial
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String   // sales, service, project, financial
+  createdAt   DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   company   Company @relation(fields: [companyId], references: [id])
@@ -200,6 +201,8 @@ model Person {
   name       String
   role       String
   department String
+  email      String?
+  phone      String?
   hireDate   DateTime
   status     String   @default("active") // active, inactive, vacation
   salary     Float?

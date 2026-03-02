@@ -8,7 +8,7 @@ const router = Router();
 router.get('/', async (req: AuthRequest, res) => {
     try {
         const flows = await prisma.operatingFlow.findMany({
-            where: { companyId: req.companyId },
+            where: { companyId: req.companyId as string },
             include: {
                 stages: { orderBy: { order: 'asc' } },
                 _count: { select: { items: true } },
@@ -27,7 +27,7 @@ router.get('/', async (req: AuthRequest, res) => {
 router.get('/:id', async (req: AuthRequest, res) => {
     try {
         const flow = await prisma.operatingFlow.findFirst({
-            where: { id: req.params.id, companyId: req.companyId },
+            where: { id: req.params.id as string, companyId: req.companyId as string },
             include: {
                 stages: { orderBy: { order: 'asc' } },
                 items: {
@@ -48,13 +48,14 @@ router.get('/:id', async (req: AuthRequest, res) => {
 // POST /api/flows
 router.post('/', checkRole(['admin']), async (req: AuthRequest, res) => {
     try {
-        const { name, type, stages } = req.body;
+        const { name, type, description, stages } = req.body;
 
         if (!name || !type) { res.status(400).json({ error: 'Nome e tipo são obrigatórios' }); return; }
 
         const flow = await prisma.operatingFlow.create({
             data: {
                 name,
+                description: description || null,
                 type,
                 companyId: req.companyId!,
                 stages: stages ? {
@@ -79,16 +80,16 @@ router.post('/', checkRole(['admin']), async (req: AuthRequest, res) => {
 // PUT /api/flows/:id
 router.put('/:id', async (req: AuthRequest, res) => {
     try {
-        const { name, type } = req.body;
+        const { name, type, description } = req.body;
         const flow = await prisma.operatingFlow.updateMany({
-            where: { id: req.params.id, companyId: req.companyId },
-            data: { name, type },
+            where: { id: req.params.id as string, companyId: req.companyId as string },
+            data: { name, type, description },
         });
 
         if (flow.count === 0) { res.status(404).json({ error: 'Fluxo não encontrado' }); return; }
 
         const updated = await prisma.operatingFlow.findUnique({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             include: { stages: { orderBy: { order: 'asc' } } },
         });
         res.json(updated);
@@ -102,7 +103,7 @@ router.put('/:id', async (req: AuthRequest, res) => {
 router.delete('/:id', checkRole(['admin']), async (req: AuthRequest, res) => {
     try {
         await prisma.operatingFlow.deleteMany({
-            where: { id: req.params.id, companyId: req.companyId },
+            where: { id: req.params.id as string, companyId: req.companyId as string },
         });
         res.json({ message: 'Fluxo removido' });
     } catch (err) {
@@ -116,7 +117,7 @@ router.post('/:id/stages', checkRole(['admin']), async (req: AuthRequest, res) =
     try {
         const { name, sla, type } = req.body;
         const flow = await prisma.operatingFlow.findFirst({
-            where: { id: req.params.id, companyId: req.companyId },
+            where: { id: req.params.id as string, companyId: req.companyId as string },
             include: { stages: true },
         });
 
@@ -142,7 +143,7 @@ router.post('/:id/stages', checkRole(['admin']), async (req: AuthRequest, res) =
 // GET /api/flows/:id/analytics
 router.get('/:id/analytics', async (req: AuthRequest, res) => {
     try {
-        const flowId = req.params.id;
+        const flowId = req.params.id as string;
         const companyId = req.companyId as string;
 
         // Fetch flow with stages and items

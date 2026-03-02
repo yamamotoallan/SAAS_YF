@@ -74,9 +74,8 @@ export const GoalsService = {
                 case METRIC_TYPES.SALES_WON_COUNT_MONTH:
                     value = await prisma.operatingItem.count({
                         where: {
-                            companyId,
-                            flow: { type: 'sales' },
-                            stage: { type: 'end_success' },
+                            flow: { companyId },
+                            status: 'won',
                             updatedAt: { gte: startOfMonth, lte: endOfMonth }
                         }
                     });
@@ -85,9 +84,8 @@ export const GoalsService = {
                 case METRIC_TYPES.SALES_WON_VALUE_MONTH:
                     const sales = await prisma.operatingItem.aggregate({
                         where: {
-                            companyId,
-                            flow: { type: 'sales' },
-                            stage: { type: 'end_success' },
+                            flow: { companyId },
+                            status: 'won',
                             updatedAt: { gte: startOfMonth, lte: endOfMonth }
                         },
                         _sum: { value: true }

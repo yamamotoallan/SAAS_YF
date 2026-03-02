@@ -180,6 +180,7 @@ export const api = {
             const query = params ? '?' + new URLSearchParams(params).toString() : '';
             return request<PaginatedResponse<Person>>(`/people${query}`);
         },
+        get: (id: string) => request<Person>(`/people/${id}`),
         summary: () => request<any>('/people/summary'),
         create: (data: Partial<Person>) =>
             request<Person>('/people', { method: 'POST', body: JSON.stringify(data) }),
@@ -250,6 +251,8 @@ export const api = {
         list: () => request<BusinessRule[]>('/rules'),
         create: (data: Partial<BusinessRule>) =>
             request<BusinessRule>('/rules', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: Partial<BusinessRule>) =>
+            request<BusinessRule>(`/rules/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         delete: (id: string) =>
             request<{ message: string }>(`/rules/${id}`, { method: 'DELETE' }),
     },

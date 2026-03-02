@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Target, Trash2, CheckCircle, Archive, RotateCcw, TrendingUp, Zap, Edit3, Printer, MessageSquarePlus, X, CalendarCheck2, BrainCircuit } from 'lucide-react';
 import { api } from '../services/api';
+import ConfirmDialog from '../components/Modal/ConfirmDialog';
+import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
+import { useToast } from '../components/Layout/ToastContext';
 import './Metas.css';
 
 interface KeyResult {
@@ -87,6 +90,7 @@ const PERIODS = [
 ];
 
 const Metas = () => {
+    const { toast } = useToast();
     const [goals, setGoals] = useState<Goal[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -99,6 +103,7 @@ const Metas = () => {
     const [savingCheckIn, setSavingCheckIn] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState<any>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     // Inline KR edit
     const [editingKr, setEditingKr] = useState<{ krId: string; value: string } | null>(null);
@@ -135,20 +140,24 @@ const Metas = () => {
             setShowModal(false);
             setFormData({ title: '', description: '', type: 'company', period: currentPeriod, keyResults: [] });
             fetchGoals();
+            toast('Meta criada com sucesso!', 'success');
         } catch {
-            alert('Erro ao criar meta');
+            toast('Erro ao criar meta', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja remover esta meta?')) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await api.goals.delete(id);
+            await api.goals.delete(deleteTarget);
             fetchGoals();
+            toast('Meta removida', 'success');
         } catch {
-            alert('Erro ao remover meta');
+            toast('Erro ao remover meta', 'error');
+        } finally {
+            setDeleteTarget(null);
         }
     };
 
@@ -156,8 +165,9 @@ const Metas = () => {
         try {
             await api.goals.update(goal.id, { status: newStatus });
             fetchGoals();
+            toast('Status atualizado!', 'success');
         } catch {
-            alert('Erro ao atualizar status');
+            toast('Erro ao atualizar status', 'error');
         }
     };
 
@@ -171,7 +181,7 @@ const Metas = () => {
             setEditingKr(null);
             await fetchGoals();
         } catch {
-            alert('Erro ao atualizar KR');
+            toast('Erro ao atualizar KR', 'error');
         } finally {
             setSavingKr(null);
         }
@@ -226,7 +236,7 @@ const Metas = () => {
             await api.goals.sync();
             await fetchGoals();
         } catch {
-            alert('Erro ao sincronizar indicadores');
+            toast('Erro ao sincronizar indicadores', 'error');
         } finally {
             setSyncing(false);
         }
@@ -301,7 +311,7 @@ const Metas = () => {
                                     alert('Todos os KPIs operando em regime de excelência! Sugestão: Manter foco em escala e otimização de margem.');
                                 }
                             } catch (e) {
-                                alert('Erro na análise da Oracle');
+                                toast('Erro na análise da Oracle', 'error');
                             } finally {
                                 setIsGenerating(false);
                             }
@@ -348,9 +358,9 @@ const Metas = () => {
                                     } as any);
                                     setAiSuggestion(null);
                                     fetchGoals();
-                                    alert('Rascunho criado! Você pode refiná-lo na aba "Rascunho".');
+                                    toast('Rascunho criado! Você pode refiná-lo na aba "Rascunho".', 'success');
                                 } catch (e) {
-                                    alert('Erro ao criar meta sugerida');
+                                    toast('Erro ao criar meta sugerida', 'error');
                                 }
                             }}>
                                 Aceitar e Criar Rascunho
@@ -406,7 +416,7 @@ const Metas = () => {
             </div>
 
             {loading ? (
-                <div className="flex justify-center p-12"><div className="spinner" /></div>
+                <LoadingSkeleton type="card" rows={3} />
             ) : filtered.length === 0 ? (
                 <div className="empty-state">
                     <Target size={48} className="text-muted" />
@@ -445,7 +455,7 @@ const Metas = () => {
                                             <RotateCcw size={16} />
                                         </button>
                                     )}
-                                    <button className="btn-icon-sm text-danger" title="Remover" onClick={() => handleDelete(goal.id)}>
+                                    <button className="btn-icon-sm text-danger" title="Remover" onClick={() => setDeleteTarget(goal.id)}>
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
@@ -685,6 +695,16 @@ const Metas = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmDialog
+                isOpen={!!deleteTarget}
+                title="Excluir Meta"
+                message="Tem certeza que deseja excluir esta meta e seus resultados-chave? Esta ação não pode ser desfeita."
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div>
     );
 };

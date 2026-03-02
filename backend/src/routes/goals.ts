@@ -105,7 +105,7 @@ router.put('/:id', checkRole(['admin', 'manager']), async (req: AuthRequest, res
     try {
         const { title, description, status, ownerId } = req.body;
         const goal = await prisma.goal.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             data: { title, description, status, ownerId },
             include: { keyResults: true }
         });
@@ -130,8 +130,8 @@ router.put('/:id', checkRole(['admin', 'manager']), async (req: AuthRequest, res
 // DELETE /api/goals/:id
 router.delete('/:id', checkRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-        const goal = await prisma.goal.findUnique({ where: { id: req.params.id } });
-        await prisma.goal.delete({ where: { id: req.params.id } });
+        const goal = await prisma.goal.findUnique({ where: { id: req.params.id as string } });
+        await prisma.goal.delete({ where: { id: req.params.id as string } });
 
         logActivity({
             action: 'deleted',
@@ -156,7 +156,7 @@ router.post('/:id/key-results', checkRole(['admin', 'manager']), async (req: Aut
 
         const kr = await prisma.keyResult.create({
             data: {
-                goalId: req.params.id,
+                goalId: req.params.id as string,
                 title,
                 targetValue: parseFloat(targetValue),
                 unit,
@@ -177,7 +177,7 @@ router.put('/key-results/:id', checkRole(['admin', 'manager']), async (req: Auth
         const { currentValue } = req.body;
 
         const kr = await prisma.keyResult.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             data: { currentValue: parseFloat(currentValue) }
         });
 

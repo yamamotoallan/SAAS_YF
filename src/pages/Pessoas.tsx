@@ -13,10 +13,16 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import Modal from '../components/Modal/Modal';
+import ConfirmDialog from '../components/Modal/ConfirmDialog';
+import Pagination from '../components/Layout/Pagination';
+import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
+import { useToast } from '../components/Layout/ToastContext';
 import { downloadCSV } from '../utils/csvUtils';
 import './Pessoas.css';
 
 const Pessoas = () => {
+    const { toast } = useToast();
+
     // Data State
     const [people, setPeople] = useState<any[]>([]);
     const [summary, setSummary] = useState<any>({
@@ -34,6 +40,7 @@ const Pessoas = () => {
     const [page, setPage] = useState(1);
     const [meta, setMeta] = useState<any>(null);
     const [selectedPerson, setSelectedPerson] = useState<any>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -85,20 +92,24 @@ const Pessoas = () => {
             }
             await loadData();
             closeModal();
+            toast(selectedPerson ? 'Colaborador atualizado!' : 'Colaborador adicionado!', 'success');
         } catch (error) {
-            alert('Erro ao salvar colaborador');
+            toast('Erro ao salvar colaborador', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Excluir este colaborador?')) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await api.people.delete(id);
+            await api.people.delete(deleteTarget);
             await loadData();
+            toast('Colaborador removido', 'success');
         } catch (error) {
-            alert('Erro ao excluir');
+            toast('Erro ao excluir', 'error');
+        } finally {
+            setDeleteTarget(null);
         }
     };
 
@@ -154,7 +165,7 @@ const Pessoas = () => {
         );
     };
 
-    if (loading) return <div className="p-8 text-center">Carregando equipe...</div>;
+    if (loading) return <div className="container animate-fade"><LoadingSkeleton type="table" rows={6} /></div>;
 
     return (
         <div className="container animate-fade">
@@ -247,34 +258,19 @@ const Pessoas = () => {
                                 </div>
                                 <div className="flex gap-1 ml-2">
                                     <button className="btn-icon-sm" onClick={() => openModal(person)}><Edit2 size={14} /></button>
-                                    <button className="btn-icon-sm text-danger" onClick={() => handleDelete(person.id)}><Trash2 size={14} /></button>
+                                    <button className="btn-icon-sm text-danger" onClick={() => setDeleteTarget(person.id)}><Trash2 size={14} /></button>
                                 </div>
                             </div>
                         ))}
                     </div>
 
                     {meta && meta.totalPages > 1 && (
-                        <div className="pagination p-4 border-t flex justify-between items-center">
-                            <span className="text-small text-muted">
-                                {page} / {meta.totalPages}
-                            </span>
-                            <div className="flex gap-2">
-                                <button
-                                    className="btn btn-secondary btn-sm"
-                                    disabled={page === 1}
-                                    onClick={() => setPage(p => p - 1)}
-                                >
-                                    Anter.
-                                </button>
-                                <button
-                                    className="btn btn-secondary btn-sm"
-                                    disabled={page === meta.totalPages}
-                                    onClick={() => setPage(p => p + 1)}
-                                >
-                                    Próx.
-                                </button>
-                            </div>
-                        </div>
+                        <Pagination
+                            page={page}
+                            totalPages={meta.totalPages}
+                            total={meta.total}
+                            onPageChange={setPage}
+                        />
                     )}
                 </div>
 
@@ -400,6 +396,16 @@ const Pessoas = () => {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmDialog
+                isOpen={!!deleteTarget}
+                title="Excluir Colaborador"
+                message="Tem certeza que deseja excluir este colaborador? O histórico associado será perdido."
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div>
     );
 };

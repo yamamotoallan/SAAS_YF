@@ -7,10 +7,15 @@ import {
     Plus,
     Trash2,
     Target,
-    AlertTriangle
+    AlertTriangle,
+    Download
 } from 'lucide-react';
 import { api } from '../services/api';
 import Modal from '../components/Modal/Modal';
+import ConfirmDialog from '../components/Modal/ConfirmDialog';
+import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
+import { useToast } from '../components/Layout/ToastContext';
+import { downloadCSV } from '../utils/csvUtils';
 import './KPIs.css';
 
 // ── SVG Gauge Ring ─────────────────────────────────────────────────────────────
@@ -84,6 +89,7 @@ const Sparkline = ({ currentProgress, trend }: { currentProgress: number; trend:
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const KPIs = () => {
+    const { toast } = useToast();
     const [kpis, setKpis] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
@@ -91,6 +97,7 @@ const KPIs = () => {
     const [submitting, setSubmitting] = useState(false);
     const [selectedKpi, setSelectedKpi] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string, event?: React.MouseEvent } | null>(null);
 
     const [formData, setFormData] = useState({
         name: '', value: 0, target: 0, unit: '%',
@@ -129,18 +136,40 @@ const KPIs = () => {
             }
             await loadData();
             closeModal();
+            toast(selectedKpi ? 'KPI atualizado!' : 'KPI criado!', 'success');
         } catch (error) {
-            alert('Erro ao salvar KPI');
+            toast('Erro ao salvar KPI', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (id: string, e: React.MouseEvent) => {
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try { await api.kpis.delete(deleteTarget.id); await loadData(); toast('KPI excluído', 'success'); }
+        catch { toast('Erro ao excluir KPI', 'error'); }
+        finally { setDeleteTarget(null); }
+    };
+
+    const handleDeleteClick = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm('Excluir este indicador?')) return;
-        try { await api.kpis.delete(id); await loadData(); }
-        catch { alert('Erro ao excluir KPI'); }
+        setDeleteTarget({ id, event: e });
+    };
+
+    const exportCSV = () => {
+        downloadCSV(
+            kpis,
+            [
+                { key: 'name', label: 'Indicador' },
+                { key: 'area', label: 'Área' },
+                { key: 'value', label: 'Valor Atual' },
+                { key: 'target', label: 'Meta' },
+                { key: 'unit', label: 'Unidade' },
+                { key: 'status', label: 'Status' },
+                { key: 'trend', label: 'Tendência (%)' },
+            ],
+            'kpis'
+        );
     };
 
     const openModal = (kpi: any = null) => {
@@ -176,7 +205,7 @@ const KPIs = () => {
     const countStatus = (s: string) => kpis.filter(k => k.status === s).length;
     const critical = kpis.filter(k => { const p = k.target > 0 ? (k.value / k.target) * 100 : 0; return p < 70; });
 
-    if (loading) return <div className="p-8 text-center text-muted">Carregando indicadores...</div>;
+    if (loading) return <div className="container animate-fade"><LoadingSkeleton type="card" rows={4} /></div>;
 
     return (
         <div className="container animate-fade">
@@ -185,9 +214,14 @@ const KPIs = () => {
                     <h1 className="text-h2">Indicadores de Desempenho</h1>
                     <p className="text-small">Monitoramento dos principais resultados</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => openModal()}>
-                    <Plus size={16} /> Novo KPI
-                </button>
+                <div className="header-actions">
+                    <button className="btn btn-secondary" onClick={exportCSV}>
+                        <Download size={16} /> Exportar
+                    </button>
+                    <button className="btn btn-primary" onClick={() => openModal()}>
+                        <Plus size={16} /> Novo KPI
+                    </button>
+                </div>
             </header>
 
             {/* ── Summary Strip ── */}
@@ -259,7 +293,7 @@ const KPIs = () => {
                                                 <AlertTriangle size={11} />
                                             </span>
                                         )}
-                                        <button className="btn-icon-sm text-danger" onClick={(e) => handleDelete(kpi.id, e)}>
+                                        <button className="btn-icon-sm text-danger" onClick={(e) => handleDeleteClick(kpi.id, e)}>
                                             <Trash2 size={13} />
                                         </button>
                                     </div>
@@ -381,6 +415,16 @@ const KPIs = () => {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmDialog
+                isOpen={!!deleteTarget}
+                title="Excluir KPI"
+                message="Tem certeza que deseja excluir este indicador? Os dados históricos serão perdidos."
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div>
     );
 };

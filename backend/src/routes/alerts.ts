@@ -56,11 +56,11 @@ router.post('/', async (req: AuthRequest, res) => {
 // PATCH /api/alerts/:id/resolve
 router.patch('/:id/resolve', async (req: AuthRequest, res) => {
     try {
-        const existing = await prisma.alert.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
+        const existing = await prisma.alert.findFirst({ where: { id: req.params.id as string, companyId: req.companyId as string } });
         if (!existing) { res.status(404).json({ error: 'Alerta não encontrado' }); return; }
 
-        await prisma.alert.update({ where: { id: req.params.id }, data: { status: 'resolved', resolvedAt: new Date() } });
-        const updated = await prisma.alert.findUnique({ where: { id: req.params.id } });
+        await prisma.alert.update({ where: { id: req.params.id as string }, data: { status: 'resolved', resolvedAt: new Date() } });
+        const updated = await prisma.alert.findUnique({ where: { id: req.params.id as string } });
 
         logActivity({ action: 'resolved', module: 'alert', entityId: req.params.id as string, entityName: existing.title, companyId: req.companyId as string, userId: req.userId as string });
         res.json(updated);
@@ -73,11 +73,11 @@ router.patch('/:id/resolve', async (req: AuthRequest, res) => {
 // PATCH /api/alerts/:id/dismiss
 router.patch('/:id/dismiss', async (req: AuthRequest, res) => {
     try {
-        const existing = await prisma.alert.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
+        const existing = await prisma.alert.findFirst({ where: { id: req.params.id as string, companyId: req.companyId as string } });
         if (!existing) { res.status(404).json({ error: 'Alerta não encontrado' }); return; }
 
-        await prisma.alert.update({ where: { id: req.params.id }, data: { status: 'dismissed' } });
-        const updated = await prisma.alert.findUnique({ where: { id: req.params.id } });
+        await prisma.alert.update({ where: { id: req.params.id as string }, data: { status: 'dismissed' } });
+        const updated = await prisma.alert.findUnique({ where: { id: req.params.id as string } });
 
         logActivity({ action: 'dismissed', module: 'alert', entityId: req.params.id as string, entityName: existing.title, companyId: req.companyId as string, userId: req.userId as string });
         res.json(updated);
@@ -90,10 +90,10 @@ router.patch('/:id/dismiss', async (req: AuthRequest, res) => {
 // DELETE /api/alerts/:id
 router.delete('/:id', checkRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-        const alert = await prisma.alert.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
-        await prisma.alert.deleteMany({ where: { id: req.params.id, companyId: req.companyId } });
+        const alert = await prisma.alert.findFirst({ where: { id: req.params.id as string, companyId: req.companyId as string } });
+        await prisma.alert.deleteMany({ where: { id: req.params.id as string, companyId: req.companyId as string } });
 
-        logActivity({ action: 'deleted', module: 'alert', entityId: req.params.id as string, entityName: alert?.title || req.params.id, companyId: req.companyId as string, userId: req.userId as string });
+        logActivity({ action: 'deleted', module: 'alert', entityId: req.params.id as string, entityName: alert?.title || (req.params.id as string), companyId: req.companyId as string, userId: req.userId as string });
         res.json({ message: 'Alerta removido' });
     } catch (err) {
         console.error(err);

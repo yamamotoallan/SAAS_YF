@@ -16,9 +16,13 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import Modal from '../components/Modal/Modal';
+import ConfirmDialog from '../components/Modal/ConfirmDialog';
+import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
+import { useToast } from '../components/Layout/ToastContext';
 import './Fluxos.css';
 
 const Fluxos = () => {
+    const { toast } = useToast();
     // Data State
     const [flows, setFlows] = useState<any[]>([]);
     const [activeFlow, setActiveFlow] = useState<any>(null);
@@ -38,6 +42,7 @@ const Fluxos = () => {
     const [lostReason, setLostReason] = useState('');
     const [viewMode, setViewMode] = useState<'kanban' | 'analytics'>('kanban');
     const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -119,8 +124,9 @@ const Fluxos = () => {
 
             setIsCreateModalOpen(false);
             setFormData({ title: '', value: 0, clientId: '', responsibleId: '', priority: 'medium', stageId: '' });
+            toast('Item criado com sucesso!', 'success');
         } catch (error) {
-            alert('Erro ao criar item');
+            toast('Erro ao criar item', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -139,8 +145,9 @@ const Fluxos = () => {
 
             setIsEditModalOpen(false);
             setSelectedItem(null);
+            toast('Item atualizado!', 'success');
         } catch (error) {
-            alert('Erro ao atualizar item');
+            toast('Erro ao atualizar item', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -152,26 +159,29 @@ const Fluxos = () => {
             setItems(prev => prev.map(i => i.id === itemId ? { ...i, stageId: newStageId } : i));
             await api.items.move(itemId, newStageId);
         } catch (error) {
-            alert('Erro ao mover item');
+            toast('Erro ao mover item', 'error');
             loadData(); // Revert
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Excluir este item?')) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await api.items.delete(id);
-            setItems(prev => prev.filter(i => i.id !== id));
+            await api.items.delete(deleteTarget);
+            setItems(prev => prev.filter(i => i.id !== deleteTarget));
             setIsEditModalOpen(false);
+            toast('Item excluído', 'success');
         } catch (error) {
-            alert('Erro ao excluir');
+            toast('Erro ao excluir', 'error');
+        } finally {
+            setDeleteTarget(null);
         }
     };
 
     const handleClose = async (status: 'won' | 'lost') => {
         if (!selectedItem) return;
         if (status === 'lost' && !lostReason.trim()) {
-            alert('Informe o motivo da perda.');
+            toast('Informe o motivo da perda.', 'warning');
             return;
         }
         setSubmitting(true);
@@ -182,7 +192,7 @@ const Fluxos = () => {
             setClosingAs(null);
             setLostReason('');
         } catch (err: any) {
-            alert(err.message || 'Erro ao encerrar item');
+            toast(err.message || 'Erro ao encerrar item', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -214,7 +224,7 @@ const Fluxos = () => {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Carregando fluxos...</div>;
+    if (loading) return <div className="container animate-fade"><LoadingSkeleton type="table" rows={5} /></div>;
     if (!activeFlow) return <div className="p-8 text-center">Nenhum fluxo encontrado.</div>;
 
     const filteredItems = items.filter(i =>
@@ -517,7 +527,7 @@ const Fluxos = () => {
                     title={selectedItem.status === 'won' ? '🏆 Oportunidade Ganha' : selectedItem.status === 'lost' ? '❌ Oportunidade Perdida' : 'Detalhes do Item'}
                     footer={
                         <div className="flex justify-between w-full">
-                            <button className="btn btn-text text-danger" onClick={() => handleDelete(selectedItem.id)}>Excluir</button>
+                            <button className="btn btn-text text-danger" onClick={() => setDeleteTarget(selectedItem.id)}>Excluir</button>
                             <div className="flex gap-2">
                                 <button className="btn btn-secondary" onClick={() => { setIsEditModalOpen(false); setClosingAs(null); }}>Cancelar</button>
                                 {selectedItem.status === 'active' && (
@@ -611,6 +621,16 @@ const Fluxos = () => {
                     )}
                 </Modal>
             )}
+
+            <ConfirmDialog
+                isOpen={!!deleteTarget}
+                title="Excluir Item"
+                message="Tem certeza que deseja excluir este item do pipeline? Esta ação não pode ser desfeita."
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div>
     );
 };

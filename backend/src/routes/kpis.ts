@@ -54,7 +54,7 @@ router.post('/', checkRole(['admin', 'manager']), async (req: AuthRequest, res) 
 // PUT /api/kpis/:id
 router.put('/:id', async (req: AuthRequest, res) => {
     try {
-        const before = await prisma.kPI.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
+        const before = await prisma.kPI.findFirst({ where: { id: req.params.id as string, companyId: req.companyId as string } });
         if (!before) { res.status(404).json({ error: 'KPI não encontrado' }); return; }
 
         const { name, category, value, target, unit, trend, status } = req.body;
@@ -68,7 +68,7 @@ router.put('/:id', async (req: AuthRequest, res) => {
             },
         });
 
-        const updated = await prisma.kPI.findUnique({ where: { id: req.params.id } });
+        const updated = await prisma.kPI.findUnique({ where: { id: req.params.id as string } });
 
         // Trigger Oracle Rule Analysis
         if (updated) {
@@ -90,10 +90,10 @@ router.put('/:id', async (req: AuthRequest, res) => {
 // DELETE /api/kpis/:id
 router.delete('/:id', checkRole(['admin']), async (req: AuthRequest, res) => {
     try {
-        const kpi = await prisma.kPI.findFirst({ where: { id: req.params.id, companyId: req.companyId } });
-        await prisma.kPI.deleteMany({ where: { id: req.params.id, companyId: req.companyId } });
+        const kpi = await prisma.kPI.findFirst({ where: { id: req.params.id as string, companyId: req.companyId as string } });
+        await prisma.kPI.deleteMany({ where: { id: req.params.id as string, companyId: req.companyId as string } });
 
-        logActivity({ action: 'deleted', module: 'kpi', entityId: req.params.id as string, entityName: kpi?.name || req.params.id, companyId: req.companyId as string, userId: req.userId as string });
+        logActivity({ action: 'deleted', module: 'kpi', entityId: req.params.id as string, entityName: kpi?.name || (req.params.id as string), companyId: req.companyId as string, userId: req.userId as string });
         res.json({ message: 'KPI removido' });
     } catch (err) {
         console.error(err);

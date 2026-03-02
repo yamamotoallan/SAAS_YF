@@ -1,0 +1,31 @@
+.skeleton-container {
+    width: 100%;
+}
+
+.skeleton-card {
+    background: var(--color-surface, #fff);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.skeleton-bar {
+    background: linear-gradient(90deg,
+            var(--border-color, #e5e7eb) 25%,
+            rgba(255, 255, 255, 0.6) 50%,
+            var(--border-color, #e5e7eb) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease infinite;
+    border-radius: 6px;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}

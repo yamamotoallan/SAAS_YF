@@ -9,16 +9,23 @@ import {
     Building2,
     User,
     ExternalLink,
-    Trash2
+    Trash2,
+    Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Client } from '../types/api';
 import Modal from '../components/Modal/Modal';
+import ConfirmDialog from '../components/Modal/ConfirmDialog';
+import Pagination from '../components/Layout/Pagination';
+import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
+import { useToast } from '../components/Layout/ToastContext';
+import { downloadCSV } from '../utils/csvUtils';
 import './Clientes.css';
 
 const Clientes = () => {
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [clients, setClients] = useState<any[]>([]);
     const [meta, setMeta] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -26,6 +33,7 @@ const Clientes = () => {
     const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -68,21 +76,40 @@ const Clientes = () => {
             await loadClients();
             setIsModalOpen(false);
             setFormData({ name: '', document: '', email: '', phone: '', segment: 'Tecnologia', type: 'PJ' as Client['type'] });
+            toast('Cliente criado com sucesso!', 'success');
         } catch (error) {
-            alert('Erro ao criar cliente');
+            toast('Erro ao criar cliente', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await api.clients.delete(id);
-            setClients(clients.filter(c => c.id !== id));
+            await api.clients.delete(deleteTarget);
+            setClients(clients.filter(c => c.id !== deleteTarget));
+            toast('Cliente excluído', 'success');
         } catch (error) {
-            alert('Erro ao excluir cliente');
+            toast('Erro ao excluir cliente', 'error');
+        } finally {
+            setDeleteTarget(null);
         }
+    };
+
+    const exportCSV = () => {
+        downloadCSV(
+            clients,
+            [
+                { key: 'name', label: 'Nome' },
+                { key: 'type', label: 'Tipo' },
+                { key: 'segment', label: 'Segmento' },
+                { key: 'email', label: 'Email' },
+                { key: 'phone', label: 'Telefone' },
+                { key: 'status', label: 'Status' },
+            ],
+            'clientes'
+        );
     };
 
     // Backend-driven filtering
@@ -95,9 +122,14 @@ const Clientes = () => {
                     <h1 className="text-h2">Carteira de Clientes</h1>
                     <p className="text-small">Gestão de relacionamento e contas (CRM)</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={16} /> Novo Cliente
-                </button>
+                <div className="header-actions">
+                    <button className="btn btn-secondary" onClick={exportCSV}>
+                        <Download size={16} /> Exportar
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                        <Plus size={16} /> Novo Cliente
+                    </button>
+                </div>
             </header>
 
             <div className="toolbar">
@@ -118,7 +150,7 @@ const Clientes = () => {
             </div>
 
             {loading ? (
-                <div className="p-8 text-center text-muted">Carregando carteira...</div>
+                <LoadingSkeleton type="card" rows={6} />
             ) : displayClients.length === 0 ? (
                 <div className="empty-state">
                     <div className="empty-icon"><User size={48} /></div>
@@ -178,7 +210,7 @@ const Clientes = () => {
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="btn-icon-sm text-danger" onClick={() => handleDelete(client.id)} title="Excluir">
+                                        <button className="btn-icon-sm text-danger" onClick={() => setDeleteTarget(client.id)} title="Excluir">
                                             <Trash2 size={14} />
                                         </button>
                                         <button className="btn-icon-sm" title="Ver Perfil" onClick={() => navigate(`/clientes/${client.id}`)}>
@@ -191,25 +223,12 @@ const Clientes = () => {
                     </div>
 
                     {meta && meta.totalPages > 1 && (
-                        <div className="pagination">
-                            <button
-                                className="btn btn-secondary"
-                                disabled={page === 1}
-                                onClick={() => setPage(p => p - 1)}
-                            >
-                                Anterior
-                            </button>
-                            <span className="text-small">
-                                Página {page} de {meta.totalPages} ({meta.total} totais)
-                            </span>
-                            <button
-                                className="btn btn-secondary"
-                                disabled={page === meta.totalPages}
-                                onClick={() => setPage(p => p + 1)}
-                            >
-                                Próxima
-                            </button>
-                        </div>
+                        <Pagination
+                            page={page}
+                            totalPages={meta.totalPages}
+                            total={meta.total}
+                            onPageChange={setPage}
+                        />
                     )}
                 </>
             )}
@@ -293,6 +312,16 @@ const Clientes = () => {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmDialog
+                isOpen={!!deleteTarget}
+                title="Excluir Cliente"
+                message="Tem certeza que deseja excluir este cliente? Todos os dados relacionados serão perdidos."
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div>
     );
 };

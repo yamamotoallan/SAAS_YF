@@ -1,0 +1,10 @@
+﻿src/routes/alerts.ts(59,66): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+src/routes/alerts.ts(76,66): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+src/routes/alerts.ts(93,63): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+src/routes/alerts.ts(94,50): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Alert">'.
+src/routes/alerts.ts(96,94): error TS2322: Type 'string | string[]' is not assignable to type 'string'.
+  Type 'string[]' is not assignable to type 'string'.

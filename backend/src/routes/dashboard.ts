@@ -23,6 +23,7 @@ router.get('/', async (req: AuthRequest, res) => {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
         // Create all query promises for parallel execution
+        console.log(`[Dashboard] Fetching data for company: ${companyId}`);
         const [
             monthFinancials,
             financialTotals,
@@ -94,6 +95,8 @@ router.get('/', async (req: AuthRequest, res) => {
                 include: { flow: true }
             })
         ]);
+
+        console.log(`[Dashboard] Queries completed for company: ${companyId}`);
 
         // Process Financial Summary
         const revenue = monthFinancials

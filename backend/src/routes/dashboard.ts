@@ -88,10 +88,16 @@ router.get('/', async (req: AuthRequest, res) => {
             })),
             logQuery('flows', prisma.operatingFlow.findMany({
                 where: { companyId },
-                include: {
+                select: {
+                    id: true,
+                    name: true,
+                    type: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    companyId: true,
                     items: { where: { status: 'active' } },
                     stages: { orderBy: { order: 'asc' } }
-                },
+                }
             })),
             logQuery('historyEntries', prisma.financialEntry.findMany({
                 where: {
@@ -114,7 +120,18 @@ router.get('/', async (req: AuthRequest, res) => {
             })),
             logQuery('revenueGoal', prisma.goal.findFirst({
                 where: { companyId, title: { contains: 'Receita', mode: 'insensitive' } },
-                include: { keyResults: true }
+                select: {
+                    id: true,
+                    title: true,
+                    type: true,
+                    period: true,
+                    status: true,
+                    progress: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    companyId: true,
+                    keyResults: true
+                }
             })),
             logQuery('vips', prisma.client.findMany({
                 where: { companyId, status: 'active', items: { some: { status: 'won' } } },

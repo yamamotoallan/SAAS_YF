@@ -374,8 +374,12 @@ router.get('/', async (req: AuthRequest, res) => {
 
         res.json(dashboardData);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erro ao gerar dashboard' });
+        console.error('[Dashboard Error]:', err);
+        const errorMessage = err instanceof Error ? err.stack || err.message : String(err);
+        res.status(500).json({
+            error: 'Erro ao gerar dashboard',
+            details: errorMessage
+        });
     }
 });
 

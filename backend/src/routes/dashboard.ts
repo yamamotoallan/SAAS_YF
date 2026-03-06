@@ -11,23 +11,39 @@ router.get('/', async (req: AuthRequest, res) => {
         const companyId = req.companyId as string;
         const cacheKey = `dashboard_${companyId}`;
 
+        if (!companyId) {
+            console.error('[Dashboard] Missing companyId in request');
+            return res.status(400).json({ error: 'Company ID não identificado' });
+        }
+
         // Check cache first
-        const cachedData = cache.get(cacheKey);
-        if (cachedData) {
+        const forceRefresh = req.query.refresh === 'true';
+        const cachedContent = cache.get(cacheKey);
+        if (cachedContent && !forceRefresh) {
             console.log(`[Dashboard] Serving from cache for company: ${companyId}`);
-            return res.json(cachedData);
+            return res.json(cachedContent);
         }
 
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        // Create all query promises for parallel execution
-        console.log(`[Dashboard] Fetching data for company: ${companyId}`);
+        // Function wrapper for logging
+        const logQuery = async <T>(name: string, promise: Promise<T>): Promise<T> => {
+            console.log(`[Dashboard] Starting query: ${name}`);
+            try {
+                const res = await promise;
+                console.log(`[Dashboard] Query ${name} completed`);
+                return res;
+            } catch (err) {
+                console.error(`[Dashboard] Query ${name} FAILED:`, err);
+                throw new Error(`Failure in query ${name}: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        };
+
         const [
             monthFinancials,
             financialTotals,
-            expenseMonthsCount,
             activePeopleCount,
             kpis,
             activeItemsData,
@@ -35,68 +51,59 @@ router.get('/', async (req: AuthRequest, res) => {
             activeAlerts,
             flows,
             historyEntries,
-            lateItems
+            lateItems,
+            allTimeSums
         ] = await Promise.all([
-            // 1. Current month financials
-            prisma.financialEntry.findMany({
+            logQuery('monthFinancials', prisma.financialEntry.findMany({
                 where: { companyId, date: { gte: startOfMonth, lte: endOfMonth } },
-            }),
-            // 2. All-time revenue and costs (Aggregated)
-            prisma.financialEntry.aggregate({
+            })),
+            logQuery('financialTotals', prisma.financialEntry.aggregate({
                 where: { companyId },
                 _sum: { value: true },
                 _count: { id: true },
-            }),
-            // 3. Count unique months with expenses (Helper for runway)
-            prisma.financialEntry.groupBy({
-                by: ['date'],
-                where: { companyId, type: { in: ['cost', 'EXPENSE'] } },
-            }),
-            // 4. People count
-            prisma.person.count({ where: { companyId, status: 'active' } }),
-            // 5. KPIs
-            prisma.kPI.findMany({ where: { companyId } }),
-            // 6. Pipeline items (Aggregated)
-            prisma.operatingItem.aggregate({
+            })),
+            logQuery('activePeopleCount', prisma.person.count({ where: { companyId, status: 'active' } })),
+            logQuery('kpis', prisma.kPI.findMany({ where: { companyId } })),
+            logQuery('activeItemsData', prisma.operatingItem.aggregate({
                 where: { flow: { companyId }, status: 'active' },
                 _sum: { value: true },
                 _count: { id: true },
-            }),
-            // 7. Processes
-            prisma.processBlock.findMany({
+            })),
+            logQuery('processBlocks', prisma.processBlock.findMany({
                 where: { companyId },
                 include: { processes: true },
-            }),
-            // 8. Alerts
-            prisma.alert.findMany({
+            })),
+            logQuery('activeAlerts', prisma.alert.findMany({
                 where: { companyId, status: 'active' },
                 orderBy: { priority: 'desc' },
                 take: 3
-            }),
-            // 9. Flows
-            prisma.operatingFlow.findMany({
+            })),
+            logQuery('flows', prisma.operatingFlow.findMany({
                 where: { companyId },
                 include: {
                     items: { where: { status: 'active' } },
                     stages: { orderBy: { order: 'asc' } }
                 },
-            }),
-            // 10. Financial History (Last 6 Months)
-            prisma.financialEntry.findMany({
+            })),
+            logQuery('historyEntries', prisma.financialEntry.findMany({
                 where: {
                     companyId,
                     date: { gte: new Date(now.getFullYear(), now.getMonth() - 5, 1), lte: endOfMonth }
                 },
                 orderBy: { date: 'asc' }
-            }),
-            // 11. Late Items for Bottleneck analysis
-            prisma.operatingItem.findMany({
+            })),
+            logQuery('lateItems', prisma.operatingItem.findMany({
                 where: { flow: { companyId }, status: 'active', slaDueAt: { lt: now } },
                 include: { flow: true }
-            })
+            })),
+            logQuery('allTimeSums', prisma.financialEntry.groupBy({
+                by: ['type'],
+                where: { companyId },
+                _sum: { value: true }
+            }))
         ]);
 
-        console.log(`[Dashboard] Queries completed for company: ${companyId}`);
+        console.log(`[Dashboard] All queries completed for company: ${companyId}`);
 
         // Process Financial Summary
         const revenue = monthFinancials
@@ -106,12 +113,6 @@ router.get('/', async (req: AuthRequest, res) => {
             .filter(e => e.type === 'cost' || e.type === 'EXPENSE')
             .reduce((s, e) => s + Number(e.value || 0), 0);
         const margin = revenue > 0 ? ((revenue - costs) / revenue) * 100 : 0;
-
-        const allTimeSums = await prisma.financialEntry.groupBy({
-            by: ['type'],
-            where: { companyId },
-            _sum: { value: true }
-        });
 
         const totalRev = allTimeSums
             .filter(s => s.type === 'revenue' || s.type === 'INCOME')

@@ -9,7 +9,13 @@ router.get('/', async (req: AuthRequest, res) => {
     try {
         const flows = await prisma.operatingFlow.findMany({
             where: { companyId: req.companyId as string },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+                companyId: true,
                 stages: { orderBy: { order: 'asc' } },
                 _count: { select: { items: true } },
             },
@@ -28,7 +34,13 @@ router.get('/:id', async (req: AuthRequest, res) => {
     try {
         const flow = await prisma.operatingFlow.findFirst({
             where: { id: req.params.id as string, companyId: req.companyId as string },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+                companyId: true,
                 stages: { orderBy: { order: 'asc' } },
                 items: {
                     include: { client: true, responsible: true, stage: true },
@@ -149,7 +161,13 @@ router.get('/:id/analytics', async (req: AuthRequest, res) => {
         // Fetch flow with stages and items
         const flow = await prisma.operatingFlow.findFirst({
             where: { id: flowId, companyId },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+                companyId: true,
                 stages: { orderBy: { order: 'asc' } },
                 items: {
                     include: { history: true }

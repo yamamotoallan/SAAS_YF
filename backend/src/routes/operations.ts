@@ -11,7 +11,13 @@ router.get('/metrics', async (req: AuthRequest, res) => {
 
         const flows = await prisma.operatingFlow.findMany({
             where: { companyId },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+                companyId: true,
                 stages: { orderBy: { order: 'asc' } },
                 items: {
                     include: { stage: true, responsible: true },

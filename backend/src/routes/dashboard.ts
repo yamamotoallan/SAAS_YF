@@ -28,16 +28,16 @@ router.get('/', async (req: AuthRequest, res) => {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        // Function wrapper for logging
-        const logQuery = async <T>(name: string, promise: Promise<T>): Promise<T> => {
+        // Function wrapper for logging with fallback support
+        const logQuery = async <T>(name: string, promise: Promise<T>, fallback: T): Promise<T> => {
             console.log(`[Dashboard] Starting query: ${name}`);
             try {
-                const res = await promise;
+                const result = await promise;
                 console.log(`[Dashboard] Query ${name} completed`);
-                return res;
+                return result;
             } catch (err) {
-                console.error(`[Dashboard] Query ${name} FAILED:`, err);
-                throw new Error(`Failure in query ${name}: ${err instanceof Error ? err.message : String(err)}`);
+                console.error(`[Dashboard] Query ${name} FAILED (using fallback):`, err instanceof Error ? err.message : String(err));
+                return fallback;
             }
         };
 
@@ -64,28 +64,28 @@ router.get('/', async (req: AuthRequest, res) => {
         ] = await Promise.all([
             logQuery('monthFinancials', prisma.financialEntry.findMany({
                 where: { companyId, date: { gte: startOfMonth, lte: endOfMonth } },
-            })),
+            }), []),
             logQuery('financialTotals', prisma.financialEntry.aggregate({
                 where: { companyId },
                 _sum: { value: true },
                 _count: { id: true },
-            })),
-            logQuery('activePeopleCount', prisma.person.count({ where: { companyId, status: 'active' } })),
-            logQuery('kpis', prisma.kPI.findMany({ where: { companyId } })),
+            }), { _sum: { value: null }, _count: { id: 0 } }),
+            logQuery('activePeopleCount', prisma.person.count({ where: { companyId, status: 'active' } }), 0),
+            logQuery('kpis', prisma.kPI.findMany({ where: { companyId } }), []),
             logQuery('activeItemsData', prisma.operatingItem.aggregate({
                 where: { flow: { companyId }, status: 'active' },
                 _sum: { value: true },
                 _count: { id: true },
-            })),
+            }), { _sum: { value: null }, _count: { id: 0 } }),
             logQuery('processBlocks', prisma.processBlock.findMany({
                 where: { companyId },
                 include: { processes: true },
-            })),
+            }), []),
             logQuery('activeAlerts', prisma.alert.findMany({
                 where: { companyId, status: 'active' },
                 orderBy: { priority: 'desc' },
                 take: 3
-            })),
+            }), []),
             logQuery('flows', prisma.operatingFlow.findMany({
                 where: { companyId },
                 select: {
@@ -98,26 +98,30 @@ router.get('/', async (req: AuthRequest, res) => {
                     items: { where: { status: 'active' } },
                     stages: { orderBy: { order: 'asc' } }
                 }
-            })),
+            }), []),
             logQuery('historyEntries', prisma.financialEntry.findMany({
                 where: {
                     companyId,
                     date: { gte: new Date(now.getFullYear(), now.getMonth() - 5, 1), lte: endOfMonth }
                 },
                 orderBy: { date: 'asc' }
-            })),
+            }), []),
             logQuery('lateItems', prisma.operatingItem.findMany({
                 where: { flow: { companyId }, status: 'active', slaDueAt: { lt: now } },
-                include: { flow: true }
-            })),
+                include: {
+                    flow: {
+                        select: { id: true, name: true, type: true }
+                    }
+                }
+            }), []),
             logQuery('allTimeSums', prisma.financialEntry.groupBy({
                 by: ['type'],
                 where: { companyId },
                 _sum: { value: true }
-            })),
+            }), []),
             logQuery('stagnantItems', prisma.operatingItem.findMany({
                 where: { flow: { companyId }, status: 'active', updatedAt: { lt: sevenDaysAgo } }
-            })),
+            }), []),
             logQuery('revenueGoal', prisma.goal.findFirst({
                 where: { companyId, title: { contains: 'Receita', mode: 'insensitive' } },
                 select: {
@@ -132,17 +136,17 @@ router.get('/', async (req: AuthRequest, res) => {
                     companyId: true,
                     keyResults: true
                 }
-            })),
+            }), null),
             logQuery('vips', prisma.client.findMany({
                 where: { companyId, status: 'active', items: { some: { status: 'won' } } },
                 include: {
                     _count: { select: { items: { where: { status: 'won' } } } },
                     items: { orderBy: { updatedAt: 'desc' }, take: 1 }
                 }
-            }))
+            }), [])
         ]);
 
-        console.log(`[Dashboard] All ${14} queries completed for company: ${companyId}`);
+        console.log(`[Dashboard] Queries result: Total ${14} queries finished.`);
 
         // Process Financial Summary
         const revenue = monthFinancials

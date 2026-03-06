@@ -41,6 +41,11 @@ router.get('/', async (req: AuthRequest, res) => {
             }
         };
 
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
         const [
             monthFinancials,
             financialTotals,
@@ -52,7 +57,10 @@ router.get('/', async (req: AuthRequest, res) => {
             flows,
             historyEntries,
             lateItems,
-            allTimeSums
+            allTimeSums,
+            stagnantItems,
+            revenueGoal,
+            vips
         ] = await Promise.all([
             logQuery('monthFinancials', prisma.financialEntry.findMany({
                 where: { companyId, date: { gte: startOfMonth, lte: endOfMonth } },
@@ -100,10 +108,24 @@ router.get('/', async (req: AuthRequest, res) => {
                 by: ['type'],
                 where: { companyId },
                 _sum: { value: true }
+            })),
+            logQuery('stagnantItems', prisma.operatingItem.findMany({
+                where: { flow: { companyId }, status: 'active', updatedAt: { lt: sevenDaysAgo } }
+            })),
+            logQuery('revenueGoal', prisma.goal.findFirst({
+                where: { companyId, title: { contains: 'Receita', mode: 'insensitive' } },
+                include: { keyResults: true }
+            })),
+            logQuery('vips', prisma.client.findMany({
+                where: { companyId, status: 'active', items: { some: { status: 'won' } } },
+                include: {
+                    _count: { select: { items: { where: { status: 'won' } } } },
+                    items: { orderBy: { updatedAt: 'desc' }, take: 1 }
+                }
             }))
         ]);
 
-        console.log(`[Dashboard] All queries completed for company: ${companyId}`);
+        console.log(`[Dashboard] All ${14} queries completed for company: ${companyId}`);
 
         // Process Financial Summary
         const revenue = monthFinancials
@@ -217,17 +239,6 @@ router.get('/', async (req: AuthRequest, res) => {
             priorityActions.push({ type: 'alert', priority: alert.priority === 'critical' ? 'critical' : 'high', text: alert.title, meta: 'Alerta • Manual', link: '/alertas' });
         });
 
-        // Intelligence: Stagnant Deals (Items in same stage for > 7 days)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const stagnantItems = await prisma.operatingItem.findMany({
-            where: {
-                flow: { companyId },
-                status: 'active',
-                updatedAt: { lt: sevenDaysAgo }
-            }
-        });
-
         if (stagnantItems.length > 0) {
             priorityActions.push({
                 type: 'commercial',
@@ -238,16 +249,9 @@ router.get('/', async (req: AuthRequest, res) => {
             });
         }
 
-        // Intelligence: Dry Pipeline (Active items value < 2x Revenue Goal)
-        const currentPipelineValue = Number(activeItemsData._sum.value || 0);
-        const revenueGoal = await prisma.goal.findFirst({
-            where: { companyId, title: { contains: 'Receita', mode: 'insensitive' } },
-            include: { keyResults: true }
-        });
-
         const goalTarget = revenueGoal?.keyResults[0]?.targetValue || 0;
 
-        if (revenueGoal && goalTarget > 0 && currentPipelineValue < goalTarget * 2) {
+        if (revenueGoal && goalTarget > 0 && pipelineValue < goalTarget * 2) {
             priorityActions.push({
                 type: 'commercial',
                 priority: 'critical',
@@ -256,26 +260,6 @@ router.get('/', async (req: AuthRequest, res) => {
                 link: '/fluxos'
             });
         }
-
-        // Intelligence: Churn Risk (High Value Clients with low activity)
-        const vips = await prisma.client.findMany({
-            where: {
-                companyId,
-                status: 'active',
-                items: {
-                    some: { status: 'won' }
-                }
-            },
-            include: {
-                _count: {
-                    select: { items: { where: { status: 'won' } } }
-                },
-                items: {
-                    orderBy: { updatedAt: 'desc' },
-                    take: 1
-                }
-            }
-        });
 
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -378,7 +362,7 @@ router.get('/', async (req: AuthRequest, res) => {
         console.error('[Dashboard Error]:', err);
         const errorMessage = err instanceof Error ? err.stack || err.message : String(err);
         res.status(500).json({
-            error: 'Erro ao gerar dashboard',
+            error: `Erro: ${errorMessage.substring(0, 150)}`,
             details: errorMessage
         });
     }

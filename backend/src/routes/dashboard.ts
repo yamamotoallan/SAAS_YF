@@ -260,10 +260,6 @@ router.get('/', async (req: AuthRequest, res) => {
                 link: '/fluxos'
             });
         }
-
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
         const churnThreats = vips.filter(c => {
             const lastItem = c.items[0];
             return lastItem && lastItem.updatedAt < thirtyDaysAgo;

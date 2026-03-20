@@ -246,6 +246,11 @@ export const api = {
         sync: () => request<{ message: string }>('/goals/sync', { method: 'POST' }),
     },
 
+    // ============ CEO MIND ============
+    ceoMind: {
+        get: () => request<any>('/ceo-mind'),
+    },
+
     // ============ RULES ============
     rules: {
         list: () => request<BusinessRule[]>('/rules'),

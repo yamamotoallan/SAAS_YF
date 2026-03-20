@@ -20,6 +20,7 @@ import operationsRoutes from './routes/operations';
 import logRoutes from './routes/logs';
 import goalRoutes from './routes/goals';
 import ruleRoutes from './routes/rules';
+import ceoMindRoutes from './routes/ceoMind';
 
 const app = express();
 
@@ -97,6 +98,7 @@ app.use('/api/operations', authMiddleware, operationsRoutes);
 app.use('/api/logs', authMiddleware, logRoutes);
 app.use('/api/goals', authMiddleware, goalRoutes);
 app.use('/api/rules', authMiddleware, ruleRoutes);
+app.use('/api/ceo-mind', authMiddleware, ceoMindRoutes);
 
 // Error handler
 app.use(errorHandler);

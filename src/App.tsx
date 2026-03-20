@@ -16,6 +16,7 @@ import Fluxos from './pages/Fluxos';
 import Clientes from './pages/Clientes';
 import ClienteDetail from './pages/ClienteDetail';
 import Metas from './pages/Metas';
+import MenteCEO from './pages/MenteCEO';
 
 import PrivateRoute from './components/Layout/PrivateRoute';
 
@@ -41,6 +42,7 @@ function App() {
             <Route path="clientes" element={<Clientes />} />
             <Route path="clientes/:id" element={<ClienteDetail />} />
             <Route path="metas" element={<Metas />} />
+            <Route path="mente-ceo" element={<MenteCEO />} />
             <Route path="config" element={<Config />} />
           </Route>
         </Route>

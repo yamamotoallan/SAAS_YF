@@ -15,6 +15,7 @@ import {
     Layers,
     Target
 } from 'lucide-react';
+import { Brain } from 'lucide-react';
 import { api } from '../../services/api';
 import './Sidebar.css';
 
@@ -49,6 +50,7 @@ const Sidebar = () => {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+        { icon: Brain, label: 'Mente de CEO', path: '/mente-ceo' },
         { icon: BarChart3, label: 'Indicadores', path: '/kpis' },
         { icon: Target, label: 'Metas & OKRs', path: '/metas' },
         { icon: Wallet, label: 'Financeiro', path: '/financeiro' },

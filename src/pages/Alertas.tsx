@@ -82,7 +82,7 @@ const typeIcon = (type: string) => {
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
-const Alertas = () => {
+const Alertas = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const [alerts, setAlerts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [scanning, setScanning] = useState(false);
@@ -223,34 +223,36 @@ const Alertas = () => {
     const urgentTotal = criticalCount + highCount;
 
     return (
-        <div className="container animate-fade">
+        <div className={`container animate-fade alerts-container ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
             {toast && <div className="al-toast">{toast}</div>}
 
             {/* ── Header ──────────────────────────────────────────────── */}
-            <header className="page-header">
-                <div>
-                    <h1 className="text-h2 flex items-center gap-2">
-                        <Bell size={22} className={urgentTotal > 0 ? 'text-danger al-bell-pulse' : 'text-muted'} />
-                        Central de Alertas
-                        {urgentTotal > 0 && (
-                            <span className="al-urgent-badge">{urgentTotal}</span>
-                        )}
-                    </h1>
-                    <p className="text-small">Monitoramento inteligente e varredura automática</p>
-                </div>
-                <div className="flex gap-2">
-                    <button className="btn btn-secondary" onClick={runScan} disabled={scanning}>
-                        <RefreshCw size={15} className={scanning ? 'spin' : ''} />
-                        {scanning ? 'Varrendo…' : 'Varredura Auto'}
-                    </button>
-                    <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-                        <Plus size={16} /> Novo Alerta
-                    </button>
-                </div>
-            </header>
+            {!isWrapper && (
+                <header className="page-header">
+                    <div>
+                        <h1 className="text-h2 flex items-center gap-2">
+                            <Bell size={22} className={urgentTotal > 0 ? 'text-danger al-bell-pulse' : 'text-muted'} />
+                            Central de Alertas
+                            {urgentTotal > 0 && (
+                                <span className="al-urgent-badge">{urgentTotal}</span>
+                            )}
+                        </h1>
+                        <p className="text-small">Monitoramento inteligente e varredura automática</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button className="btn btn-secondary" onClick={runScan} disabled={scanning}>
+                            <RefreshCw size={15} className={scanning ? 'spin' : ''} />
+                            {scanning ? 'Varrendo…' : 'Varredura Auto'}
+                        </button>
+                        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                            <Plus size={16} /> Novo Alerta
+                        </button>
+                    </div>
+                </header>
+            )}
 
             {/* ── Tabs ────────────────────────────────────────────────── */}
-            <div className="toolbar">
+            <div className={`toolbar ${isWrapper ? 'mt-4' : ''} flex justify-between`}>
                 <div className="tabs">
                     {([['active', 'Pendentes'], ['history', 'Histórico'], ['rules', 'Regras']] as [Tab, string][]).map(([id, label]) => (
                         <button
@@ -264,6 +266,17 @@ const Alertas = () => {
                         </button>
                     ))}
                 </div>
+                {isWrapper && (
+                    <div className="flex gap-2">
+                        <button className="btn btn-secondary" onClick={runScan} disabled={scanning}>
+                            <RefreshCw size={15} className={scanning ? 'spin' : ''} />
+                            {scanning ? 'Varrendo…' : 'Varredura Auto'}
+                        </button>
+                        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                            <Plus size={16} /> Novo Alerta
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* ══ TAB: Active / History ═══════════════════════════════════ */}

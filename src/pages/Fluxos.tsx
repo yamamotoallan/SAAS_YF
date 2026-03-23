@@ -21,7 +21,7 @@ import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
 import { useToast } from '../components/Layout/ToastContext';
 import './Fluxos.css';
 
-const Fluxos = () => {
+const Fluxos = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const { toast } = useToast();
     // Data State
     const [flows, setFlows] = useState<any[]>([]);
@@ -238,45 +238,47 @@ const Fluxos = () => {
     const lostCount = items.filter(i => i.flowId === activeFlow.id && i.status === 'lost').length;
 
     return (
-        <div className="container animate-fade">
-            <header className="page-header">
-                <div>
-                    <h1 className="text-h2">Fluxos Operacionais</h1>
-                    <p className="text-small">Gestão visual e pipeline de trabalho</p>
-                </div>
-                <div className="header-actions">
-                    <div className="flow-selector">
-                        {flows.map(flow => (
+        <div className={`container animate-fade ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
+            {!isWrapper && (
+                <header className="page-header">
+                    <div>
+                        <h1 className="text-h2">Fluxos Operacionais</h1>
+                        <p className="text-small">Gestão visual e pipeline de trabalho</p>
+                    </div>
+                    <div className="header-actions">
+                        <div className="flow-selector">
+                            {flows.map(flow => (
+                                <button
+                                    key={flow.id}
+                                    className={`btn-tab ${activeFlow.id === flow.id ? 'active' : ''}`}
+                                    onClick={() => setActiveFlow(flow)}
+                                >
+                                    {flow.name}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="view-toggle">
                             <button
-                                key={flow.id}
-                                className={`btn-tab ${activeFlow.id === flow.id ? 'active' : ''}`}
-                                onClick={() => setActiveFlow(flow)}
+                                className={`btn-tab ${viewMode === 'kanban' ? 'active' : ''}`}
+                                onClick={() => setViewMode('kanban')}
                             >
-                                {flow.name}
+                                Kanban
                             </button>
-                        ))}
-                    </div>
-                    <div className="view-toggle">
-                        <button
-                            className={`btn-tab ${viewMode === 'kanban' ? 'active' : ''}`}
-                            onClick={() => setViewMode('kanban')}
-                        >
-                            Kanban
-                        </button>
-                        <button
-                            className={`btn-tab ${viewMode === 'analytics' ? 'active' : ''}`}
-                            onClick={() => setViewMode('analytics')}
-                        >
-                            Analytics
+                            <button
+                                className={`btn-tab ${viewMode === 'analytics' ? 'active' : ''}`}
+                                onClick={() => setViewMode('analytics')}
+                            >
+                                Analytics
+                            </button>
+                        </div>
+                        <button className="btn btn-primary" onClick={openCreateModal}>
+                            <Plus size={16} /> Novo Item
                         </button>
                     </div>
-                    <button className="btn btn-primary" onClick={openCreateModal}>
-                        <Plus size={16} /> Novo Item
-                    </button>
-                </div>
-            </header>
+                </header>
+            )}
 
-            <div className="toolbar">
+            <div className={`toolbar ${isWrapper ? 'mt-4' : ''}`}>
                 <div className="search-bar">
                     <Search size={16} className="text-muted" />
                     <input
@@ -301,6 +303,38 @@ const Fluxos = () => {
                     <div className="text-sm text-gray-500">
                         Total: {filteredItems.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </div>
+                    {isWrapper && (
+                        <div className="flex gap-2 ml-4">
+                            <div className="flow-selector">
+                                {flows.map(flow => (
+                                    <button
+                                        key={flow.id}
+                                        className={`btn-tab ${activeFlow.id === flow.id ? 'active' : ''}`}
+                                        onClick={() => setActiveFlow(flow)}
+                                    >
+                                        {flow.name}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="view-toggle">
+                                <button
+                                    className={`btn-tab ${viewMode === 'kanban' ? 'active' : ''}`}
+                                    onClick={() => setViewMode('kanban')}
+                                >
+                                    Kanban
+                                </button>
+                                <button
+                                    className={`btn-tab ${viewMode === 'analytics' ? 'active' : ''}`}
+                                    onClick={() => setViewMode('analytics')}
+                                >
+                                    Analytics
+                                </button>
+                            </div>
+                            <button className="btn btn-primary" onClick={openCreateModal}>
+                                <Plus size={16} /> Novo Item
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

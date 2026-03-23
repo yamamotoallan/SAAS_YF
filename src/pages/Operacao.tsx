@@ -19,7 +19,7 @@ import type {
 } from '../types/api';
 import './Operacao.css';
 
-const Operacao = () => {
+const Operacao = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const [data, setData] = useState<OperationsMetrics | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
@@ -55,16 +55,26 @@ const Operacao = () => {
     const activeFlow = data.flows.find((f: FlowMetric) => f.flowId === selectedFlowId) || data.flows[0];
 
     return (
-        <div className="container animate-fade">
-            <header className="page-header">
-                <div>
-                    <h1 className="text-h2">Eficiência Operacional</h1>
-                    <p className="text-small">Análise de fluxos, gargalos e capacidade</p>
+        <div className={`container animate-fade ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
+            {!isWrapper && (
+                <header className="page-header">
+                    <div>
+                        <h1 className="text-h2">Eficiência Operacional</h1>
+                        <p className="text-small">Análise de fluxos, gargalos e capacidade</p>
+                    </div>
+                    <div className={`status-badge-lg ${data.overall.statusClass}`}>
+                        {data.overall.status || 'Operação Normal'}
+                    </div>
+                </header>
+            )}
+
+            {isWrapper && (
+                <div className="flex justify-end mb-4 mt-4">
+                    <div className={`status-badge-lg ${data.overall.statusClass}`}>
+                        {data.overall.status || 'Operação Normal'}
+                    </div>
                 </div>
-                <div className={`status-badge-lg ${data.overall.statusClass}`}>
-                    {data.overall.status || 'Operação Normal'}
-                </div>
-            </header>
+            )}
 
             {/* KPI Cockpit - Overall */}
             <div className="ops-metrics-grid">

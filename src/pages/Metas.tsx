@@ -89,7 +89,7 @@ const PERIODS = [
     { value: '2026', label: 'Anual 2026' },
 ];
 
-const Metas = () => {
+const Metas = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const { toast } = useToast();
     const [goals, setGoals] = useState<Goal[]>([]);
     const [loading, setLoading] = useState(true);
@@ -243,31 +243,33 @@ const Metas = () => {
     };
 
     return (
-        <div className="container animate-fade goals-container">
-            <header className="page-header">
-                <div>
-                    <h1 className="text-h2">Metas & OKRs</h1>
-                    <p className="text-small">Gestão de objetivos e resultados-chave</p>
-                </div>
-                <div className="flex gap-2 items-center">
-                    <select
-                        className="input-field"
-                        value={currentPeriod}
-                        onChange={e => setCurrentPeriod(e.target.value)}
-                    >
-                        {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                    </select>
-                    <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
-                        <RotateCcw size={16} className={syncing ? 'animate-spin' : ''} /> {syncing ? 'Sincronizando...' : 'Sincronizar'}
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => window.print()} title="Exportar OKR PDF">
-                        <Printer size={16} /> Exportar
-                    </button>
-                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                        <Plus size={18} /> Nova Meta
-                    </button>
-                </div>
-            </header>
+        <div className={`container animate-fade goals-container ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
+            {!isWrapper && (
+                <header className="page-header">
+                    <div>
+                        <h1 className="text-h2">Metas & OKRs</h1>
+                        <p className="text-small">Gestão de objetivos e resultados-chave</p>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <select
+                            className="input-field"
+                            value={currentPeriod}
+                            onChange={e => setCurrentPeriod(e.target.value)}
+                        >
+                            {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                        </select>
+                        <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
+                            <RotateCcw size={16} className={syncing ? 'animate-spin' : ''} /> {syncing ? 'Sincronizando...' : 'Sincronizar'}
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => window.print()} title="Exportar OKR PDF">
+                            <Printer size={16} /> Exportar
+                        </button>
+                        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                            <Plus size={18} /> Nova Meta
+                        </button>
+                    </div>
+                </header>
+            )}
 
             {/* AI Goal Assistant (Oracle) */}
             <div className={`okr-ai-assistant ${isGenerating ? 'generating' : ''}`}>
@@ -400,19 +402,41 @@ const Metas = () => {
             )}
 
             {/* Status Tabs */}
-            <div className="okr-tab-bar">
-                {STATUS_TABS.map(tab => (
-                    <button
-                        key={tab.key}
-                        className={`okr-tab ${activeStatus === tab.key ? 'active' : ''}`}
-                        onClick={() => setActiveStatus(tab.key as any)}
-                    >
-                        {tab.icon} {tab.label}
-                        {counts[tab.key as keyof typeof counts] > 0 && (
-                            <span className="okr-tab-count">{counts[tab.key as keyof typeof counts]}</span>
-                        )}
-                    </button>
-                ))}
+            <div className="okr-tab-bar flex justify-between items-center">
+                <div className="flex gap-2">
+                    {STATUS_TABS.map(tab => (
+                        <button
+                            key={tab.key}
+                            className={`okr-tab ${activeStatus === tab.key ? 'active' : ''}`}
+                            onClick={() => setActiveStatus(tab.key as any)}
+                        >
+                            {tab.icon} {tab.label}
+                            {counts[tab.key as keyof typeof counts] > 0 && (
+                                <span className="okr-tab-count">{counts[tab.key as keyof typeof counts]}</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+                {isWrapper && (
+                    <div className="flex gap-2 items-center pb-2">
+                        <select
+                            className="input-field"
+                            value={currentPeriod}
+                            onChange={e => setCurrentPeriod(e.target.value)}
+                        >
+                            {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                        </select>
+                        <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
+                            <RotateCcw size={16} className={syncing ? 'animate-spin' : ''} /> {syncing ? 'Sincronizando...' : 'Sincronizar'}
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => window.print()} title="Exportar OKR PDF">
+                            <Printer size={16} /> Exportar
+                        </button>
+                        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                            <Plus size={18} /> Nova Meta
+                        </button>
+                    </div>
+                )}
             </div>
 
             {loading ? (

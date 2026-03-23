@@ -73,7 +73,7 @@ const ThresholdPreview = ({ label, value, unit, icon }: { label: string; value: 
 
 // ── Main component ─────────────────────────────────────────────────────────────
 const Config = () => {
-    const [activeTab, setActiveTab] = useState<'general' | 'params' | 'rules' | 'logs'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'params' | 'rules' | 'users' | 'logs'>('general');
     const [loading, setLoading] = useState(false);
     const [userRole, setUserRole] = useState<string>('viewer');
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -88,6 +88,13 @@ const Config = () => {
         setUserRole(user.role || 'viewer');
         if (user.role !== 'admin' && activeTab !== 'logs') setActiveTab('logs');
     }, []);
+
+    // Users
+    const [users, setUsers] = useState<any[]>([]);
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+    const [userForm, setUserForm] = useState({
+        name: '', email: '', role: 'user', password: ''
+    });
 
     // Logs
     const [logs, setLogs] = useState<any[]>([]);
@@ -107,7 +114,7 @@ const Config = () => {
 
     useEffect(() => {
         if (activeTab === 'logs') loadLogs();
-        if (activeTab === 'general' || activeTab === 'params') loadCompany();
+        if (activeTab === 'general' || activeTab === 'params' || activeTab === 'users') loadCompany();
     }, [activeTab, moduleFilter, actionFilter]);
 
     const loadCompany = async () => {
@@ -129,6 +136,13 @@ const Config = () => {
             });
         } catch { console.error('Failed to load company'); }
         finally { setLoading(false); }
+
+        if (activeTab === 'users') {
+            try {
+                const usersData = await api.company.users();
+                setUsers(usersData);
+            } catch { console.error('Failed to load users'); }
+        }
     };
 
     const loadLogs = async () => {
@@ -150,6 +164,24 @@ const Config = () => {
             showToast('Configurações salvas com sucesso!');
         } catch {
             showToast('Erro ao salvar configurações', 'error');
+        } finally { setLoading(false); }
+    };
+
+    const handleCreateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.auth.register({
+                ...userForm,
+                companyId: company.id
+            } as any);
+            const usersData = await api.company.users();
+            setUsers(usersData);
+            setIsUserModalOpen(false);
+            setUserForm({ name: '', email: '', role: 'user', password: '' });
+            showToast('Usuário convidado com sucesso!');
+        } catch (error: any) {
+            showToast('Erro ao adicionar usuário: ' + error.message, 'error');
         } finally { setLoading(false); }
     };
 
@@ -205,6 +237,9 @@ const Config = () => {
                         </button>
                         <button className={`tab-btn ${activeTab === 'params' ? 'active' : ''}`} onClick={() => setActiveTab('params')}>
                             <Settings size={16} /> Parâmetros
+                        </button>
+                        <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+                            <Users size={16} /> Equipe
                         </button>
                     </>
                 )}
@@ -396,6 +431,49 @@ const Config = () => {
                 </div>
             )}
 
+            {/* ── TAB: EQUIPE (USUÁRIOS) ── */}
+            {activeTab === 'users' && (
+                <div className="card">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-h3">Usuários com Acesso</h3>
+                        <button className="btn btn-primary" onClick={() => setIsUserModalOpen(true)}>
+                            <Plus size={16} /> Convidar Usuário
+                        </button>
+                    </div>
+
+                    <div className="table-responsive">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="border-b text-muted text-sm">
+                                    <th className="p-3">Nome</th>
+                                    <th className="p-3">Email</th>
+                                    <th className="p-3">Função</th>
+                                    <th className="p-3 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.map(user => (
+                                    <tr key={user.id} className="border-b hover:bg-gray-50">
+                                        <td className="p-3 font-medium">{user.name}</td>
+                                        <td className="p-3 text-muted">{user.email}</td>
+                                        <td className="p-3">
+                                            <span className={`badge badge-${user.role === 'admin' ? 'primary' : 'neutral'}`}>
+                                                {user.role === 'admin' ? 'Administrador' : 'Usuário'}
+                                            </span>
+                                        </td>
+                                        <td className="p-3 text-right">
+                                            <button className="btn-icon-sm text-danger" title="Remover acesso">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             {/* ── TAB: AUTOMAÇÃO (REGRAS) ── */}
             {activeTab === 'rules' && <RulesConfig />}
 
@@ -455,6 +533,44 @@ const Config = () => {
                         )}
                     </div>
                 </>
+            )}
+
+            {isUserModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '500px' }}>
+                        <div className="modal-header">
+                            <h2>Convidar Novo Usuário</h2>
+                            <button className="btn-icon-xs" onClick={() => setIsUserModalOpen(false)}>×</button>
+                        </div>
+                        <div className="modal-body">
+                            <form className="form-grid">
+                                <div className="form-group">
+                                    <label>Nome Completo</label>
+                                    <input type="text" className="input-field" required value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email Corporativo</label>
+                                    <input type="email" className="input-field" required value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Função</label>
+                                    <select className="input-field" value={userForm.role} onChange={e => setUserForm({ ...userForm, role: e.target.value })}>
+                                        <option value="user">Usuário (Visualização/Edição limitada)</option>
+                                        <option value="admin">Administrador (Acesso total)</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Senha Temporária</label>
+                                    <input type="password" className="input-field" required value={userForm.password} onChange={e => setUserForm({ ...userForm, password: e.target.value })} />
+                                </div>
+                            </form>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setIsUserModalOpen(false)}>Cancelar</button>
+                            <button className="btn btn-primary" onClick={handleCreateUser} disabled={loading}>Enviar Convite</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

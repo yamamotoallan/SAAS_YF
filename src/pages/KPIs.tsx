@@ -88,7 +88,7 @@ const Sparkline = ({ currentProgress, trend }: { currentProgress: number; trend:
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────────
-const KPIs = () => {
+const KPIs = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const { toast } = useToast();
     const [kpis, setKpis] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -208,21 +208,23 @@ const KPIs = () => {
     if (loading) return <div className="container animate-fade"><LoadingSkeleton type="card" rows={4} /></div>;
 
     return (
-        <div className="container animate-fade">
-            <header className="page-header">
-                <div>
-                    <h1 className="text-h2">Indicadores de Desempenho</h1>
-                    <p className="text-small">Monitoramento dos principais resultados</p>
-                </div>
-                <div className="header-actions">
-                    <button className="btn btn-secondary" onClick={exportCSV}>
-                        <Download size={16} /> Exportar
-                    </button>
-                    <button className="btn btn-primary" onClick={() => openModal()}>
-                        <Plus size={16} /> Novo KPI
-                    </button>
-                </div>
-            </header>
+        <div className={`container animate-fade kpi-container ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
+            {!isWrapper && (
+                <header className="page-header">
+                    <div>
+                        <h1 className="text-h2">Indicadores de Desempenho</h1>
+                        <p className="text-small">Monitoramento dos principais resultados</p>
+                    </div>
+                    <div className="header-actions">
+                        <button className="btn btn-secondary" onClick={exportCSV}>
+                            <Download size={16} /> Exportar
+                        </button>
+                        <button className="btn btn-primary" onClick={() => openModal()}>
+                            <Plus size={16} /> Novo KPI
+                        </button>
+                    </div>
+                </header>
+            )}
 
             {/* ── Summary Strip ── */}
             {kpis.length > 0 && (
@@ -249,24 +251,36 @@ const KPIs = () => {
             )}
 
             {/* ── Filters Bar ── */}
-            <div className="filters-bar">
-                <div className="search-box">
-                    <Search size={18} className="search-icon" />
-                    <input type="text" placeholder="Buscar indicador..." className="search-input"
-                        value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            <div className="filters-bar flex justify-between">
+                <div className="flex gap-4">
+                    <div className="search-box">
+                        <Search size={18} className="search-icon" />
+                        <input type="text" placeholder="Buscar indicador..." className="search-input"
+                            value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                    </div>
+                    <div className="status-filters">
+                        <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>Todos</button>
+                        <button className={`filter-btn ${filter === 'success' ? 'active' : ''}`} onClick={() => setFilter('success')}>
+                            <span className="dot success" /> Na Meta
+                        </button>
+                        <button className={`filter-btn ${filter === 'warning' ? 'active' : ''}`} onClick={() => setFilter('warning')}>
+                            <span className="dot warning" /> Atenção
+                        </button>
+                        <button className={`filter-btn ${filter === 'danger' ? 'active' : ''}`} onClick={() => setFilter('danger')}>
+                            <span className="dot danger" /> Crítico
+                        </button>
+                    </div>
                 </div>
-                <div className="status-filters">
-                    <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>Todos</button>
-                    <button className={`filter-btn ${filter === 'success' ? 'active' : ''}`} onClick={() => setFilter('success')}>
-                        <span className="dot success" /> Na Meta
-                    </button>
-                    <button className={`filter-btn ${filter === 'warning' ? 'active' : ''}`} onClick={() => setFilter('warning')}>
-                        <span className="dot warning" /> Atenção
-                    </button>
-                    <button className={`filter-btn ${filter === 'danger' ? 'active' : ''}`} onClick={() => setFilter('danger')}>
-                        <span className="dot danger" /> Crítico
-                    </button>
-                </div>
+                {isWrapper && (
+                    <div className="flex gap-2">
+                        <button className="btn btn-secondary" onClick={exportCSV}>
+                            <Download size={16} /> Exportar
+                        </button>
+                        <button className="btn btn-primary" onClick={() => openModal()}>
+                            <Plus size={16} /> Novo KPI
+                        </button>
+                    </div>
+                )}
             </div>
 
             {filteredKPIs.length === 0 ? (

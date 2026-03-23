@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import './Relatorios.css';
 import StaticCashFlowChart from '../components/Dashboard/StaticCashFlowChart';
 
-const Relatorios = () => {
+const Relatorios = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
     const [generating, setGenerating] = useState(false);
@@ -55,15 +55,17 @@ const Relatorios = () => {
     };
 
     return (
-        <div className="container animate-fade reports-container">
-            <header className="page-header reports-header">
-                <div>
-                    <h1 className="text-h2">Relatórios Executivos</h1>
-                    <p className="text-small">Geração de book de resultados (PDF)</p>
-                </div>
-            </header>
+        <div className={`container animate-fade reports-container ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
+            {!isWrapper && (
+                <header className="page-header reports-header">
+                    <div>
+                        <h1 className="text-h2">Relatórios Executivos</h1>
+                        <p className="text-small">Geração de book de resultados (PDF)</p>
+                    </div>
+                </header>
+            )}
 
-            <div className="report-controls mb-lg">
+            <div className={`report-controls mb-lg ${isWrapper ? 'mt-4' : ''}`}>
                 <div className="control-group">
                     <label>Mês de Referência</label>
                     <div className="flex gap-2">

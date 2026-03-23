@@ -3,20 +3,15 @@ import MainLayout from './components/Layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
-import KPIs from './pages/KPIs';
 import Financeiro from './pages/Financeiro';
 import Pessoas from './pages/Pessoas';
-import Alertas from './pages/Alertas';
-import Relatorios from './pages/Relatorios';
-import Empresa from './pages/Empresa';
 import Config from './pages/Config';
-import Processos from './pages/Processos';
-import Operacao from './pages/Operacao';
-import Fluxos from './pages/Fluxos';
 import Clientes from './pages/Clientes';
 import ClienteDetail from './pages/ClienteDetail';
-import Metas from './pages/Metas';
-import MenteCEO from './pages/MenteCEO';
+import Performance from './pages/Performance';
+import Inteligencia from './pages/Inteligencia';
+import Operacoes from './pages/Operacoes';
+import { Navigate } from 'react-router-dom';
 
 import PrivateRoute from './components/Layout/PrivateRoute';
 
@@ -30,20 +25,29 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="kpis" element={<KPIs />} />
+            
+            {/* New Wrapper Pages */}
+            <Route path="performance" element={<Performance />} />
+            <Route path="inteligencia" element={<Inteligencia />} />
+            <Route path="operacoes" element={<Operacoes />} />
+            
+            {/* Kept Individual Pages */}
             <Route path="financeiro" element={<Financeiro />} />
             <Route path="pessoas" element={<Pessoas />} />
-            <Route path="alertas" element={<Alertas />} />
-            <Route path="relatorios" element={<Relatorios />} />
-            <Route path="empresa" element={<Empresa />} />
-            <Route path="processos" element={<Processos />} />
-            <Route path="operacao" element={<Operacao />} />
-            <Route path="fluxos" element={<Fluxos />} />
             <Route path="clientes" element={<Clientes />} />
             <Route path="clientes/:id" element={<ClienteDetail />} />
-            <Route path="metas" element={<Metas />} />
-            <Route path="mente-ceo" element={<MenteCEO />} />
             <Route path="config" element={<Config />} />
+
+            {/* Redirects for merged/old routes */}
+            <Route path="kpis" element={<Navigate to="/performance" replace />} />
+            <Route path="metas" element={<Navigate to="/performance" replace />} />
+            <Route path="mente-ceo" element={<Navigate to="/inteligencia" replace />} />
+            <Route path="alertas" element={<Navigate to="/inteligencia" replace />} />
+            <Route path="relatorios" element={<Navigate to="/inteligencia" replace />} />
+            <Route path="fluxos" element={<Navigate to="/operacoes" replace />} />
+            <Route path="operacao" element={<Navigate to="/operacoes" replace />} />
+            <Route path="processos" element={<Navigate to="/operacoes" replace />} />
+            <Route path="empresa" element={<Navigate to="/config" replace />} />
           </Route>
         </Route>
         <Route path="/login" element={<Login />} />

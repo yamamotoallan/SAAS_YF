@@ -8,26 +8,10 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
+import ScoreRing from '../components/shared/ScoreRing';
+import { fmtBRL } from '../utils/formatters';
 import './MenteCEO.css';
 
-// ── Score Ring ──
-const ScoreRing = ({ score }: { score: number }) => {
-    const r = 52, circ = 2 * Math.PI * r, pct = Math.min(score, 100) / 100;
-    const offset = circ - pct * circ;
-    const color = score >= 70 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444';
-    return (
-        <svg width="130" height="130" viewBox="0 0 130 130">
-            <circle cx="65" cy="65" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="9" />
-            <circle cx="65" cy="65" r={r} fill="none" stroke={color} strokeWidth="9"
-                strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
-                transform="rotate(-90 65 65)" style={{ transition: 'stroke-dashoffset 1s ease' }} />
-            <text x="65" y="58" textAnchor="middle" fontSize="28" fontWeight="800" fill="white">{score}</text>
-            <text x="65" y="76" textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.6)">/ 100</text>
-        </svg>
-    );
-};
-
-const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 });
 const pillarColor = (s: number) => s >= 70 ? '#22c55e' : s >= 50 ? '#f59e0b' : '#ef4444';
 const pillarClass = (s: number) => s >= 70 ? 'good' : s >= 50 ? 'warning' : 'danger';
 const trendIcon = (t: string) => t === 'up' ? <TrendingUp size={13} /> : t === 'down' ? <TrendingDown size={13} /> : <Minus size={13} />;
@@ -126,7 +110,7 @@ const McKINSEY_7S = [
 ];
 
 // ── Main Component ──
-const MenteCEO = () => {
+const MenteCEO = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
@@ -554,27 +538,29 @@ const MenteCEO = () => {
     );
 
     return (
-        <div className="container animate-fade ceo-page">
+        <div className={`container animate-fade ceo-page ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
             {/* Hero */}
-            <div className="ceo-hero">
-                <div className="ceo-hero-content">
-                    <div className="ceo-hero-score"><ScoreRing score={pulse.sgeScore} /></div>
-                    <div className="ceo-hero-info">
-                        <div className="ceo-hero-label"><Brain size={14} /> MENTE DE CEO</div>
-                        <h1 className="ceo-hero-title">{pulse.sgeStatus}</h1>
-                        <p className="ceo-hero-sub">Plataforma de Aceleração Executiva — {data.companyName}</p>
-                    </div>
-                    <div className="ceo-hero-stats">
-                        <div className="ceo-hero-stat"><DollarSign size={18} /><div><span className="ceo-hero-stat-label">Receita</span><span className="ceo-hero-stat-value">{fmtBRL(pulse.revenue)}</span></div></div>
-                        <div className="ceo-hero-stat"><Target size={18} /><div><span className="ceo-hero-stat-label">Metas</span><span className="ceo-hero-stat-value">{pulse.activeGoals}</span></div></div>
-                        <div className="ceo-hero-stat"><Users size={18} /><div><span className="ceo-hero-stat-label">Equipe</span><span className="ceo-hero-stat-value">{pulse.headcount}</span></div></div>
-                        <div className="ceo-hero-stat"><AlertTriangle size={18} /><div><span className="ceo-hero-stat-label">Alertas</span><span className="ceo-hero-stat-value">{pulse.activeAlerts}</span></div></div>
+            {!isWrapper && (
+                <div className="ceo-hero">
+                    <div className="ceo-hero-content">
+                        <div className="ceo-hero-score"><ScoreRing score={pulse.sgeScore} /></div>
+                        <div className="ceo-hero-info">
+                            <div className="ceo-hero-label"><Brain size={14} /> MENTE DE CEO</div>
+                            <h1 className="ceo-hero-title">{pulse.sgeStatus}</h1>
+                            <p className="ceo-hero-sub">Plataforma de Aceleração Executiva — {data.companyName}</p>
+                        </div>
+                        <div className="ceo-hero-stats">
+                            <div className="ceo-hero-stat"><DollarSign size={18} /><div><span className="ceo-hero-stat-label">Receita</span><span className="ceo-hero-stat-value">{fmtBRL(pulse.revenue)}</span></div></div>
+                            <div className="ceo-hero-stat"><Target size={18} /><div><span className="ceo-hero-stat-label">Metas</span><span className="ceo-hero-stat-value">{pulse.activeGoals}</span></div></div>
+                            <div className="ceo-hero-stat"><Users size={18} /><div><span className="ceo-hero-stat-label">Equipe</span><span className="ceo-hero-stat-value">{pulse.headcount}</span></div></div>
+                            <div className="ceo-hero-stat"><AlertTriangle size={18} /><div><span className="ceo-hero-stat-label">Alertas</span><span className="ceo-hero-stat-value">{pulse.activeAlerts}</span></div></div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Tabs */}
-            <div className="ceo-tabs">
+            <div className={`ceo-tabs ${isWrapper ? 'pt-4' : ''}`}>
                 {TABS.map(tab => (
                     <button key={tab.id} className={`ceo-tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
                         <tab.icon size={16} /> {tab.label}

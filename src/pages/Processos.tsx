@@ -11,7 +11,7 @@ import { api } from '../services/api';
 import './Processos.css';
 import ActionPlanModal from '../components/Processes/ActionPlanModal';
 
-const Processos = () => {
+const Processos = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     const [blocks, setBlocks] = useState<any[]>([]);
     const [diagnosis, setDiagnosis] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -129,28 +129,48 @@ const Processos = () => {
     ).sort((a, _b) => (a.status === 'none' ? -1 : 1));
 
     return (
-        <div className="process-intelligence-container animate-fade">
-            <header className="page-header">
-                <div>
-                    <h1 className="text-h2 flex items-center gap-2">
-                        <BrainCircuit className="text-primary" /> Process Intelligence
-                    </h1>
-                    <p className="text-small">Monitoramento de fricção e maturidade organizacional</p>
-                </div>
-                <div className="header-health-summary">
-                    <div className="summary-item">
-                        <span className="summary-label">Maturidade Geral</span>
-                        <span className={`summary-value text-${diagnosis?.statusClass || 'muted'}`}>
-                            {diagnosis?.overallScore || 0}%
-                        </span>
+        <div className={`process-intelligence-container animate-fade ${isWrapper ? 'is-wrapper pt-0' : ''}`}>
+            {!isWrapper && (
+                <header className="page-header">
+                    <div>
+                        <h1 className="text-h2 flex items-center gap-2">
+                            <BrainCircuit className="text-primary" /> Process Intelligence
+                        </h1>
+                        <p className="text-small">Monitoramento de fricção e maturidade organizacional</p>
                     </div>
-                    <div className="summary-div" />
-                    <div className="summary-item">
-                        <span className="summary-label">Vulnerabilidades</span>
-                        <span className="summary-value text-danger">{blockers.length}</span>
+                    <div className="header-health-summary">
+                        <div className="summary-item">
+                            <span className="summary-label">Maturidade Geral</span>
+                            <span className={`summary-value text-${diagnosis?.statusClass || 'muted'}`}>
+                                {diagnosis?.overallScore || 0}%
+                            </span>
+                        </div>
+                        <div className="summary-div" />
+                        <div className="summary-item">
+                            <span className="summary-label">Vulnerabilidades</span>
+                            <span className="summary-value text-danger">{blockers.length}</span>
+                        </div>
+                    </div>
+                </header>
+            )}
+
+            {isWrapper && (
+                <div className="flex justify-end mb-4 pt-4">
+                    <div className="header-health-summary" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '0.75rem 1.5rem', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        <div className="summary-item">
+                            <span className="summary-label">Maturidade Geral</span>
+                            <span className={`summary-value text-${diagnosis?.statusClass || 'muted'}`}>
+                                {diagnosis?.overallScore || 0}%
+                            </span>
+                        </div>
+                        <div className="summary-div" />
+                        <div className="summary-item">
+                            <span className="summary-label">Vulnerabilidades</span>
+                            <span className="summary-value text-danger">{blockers.length}</span>
+                        </div>
                     </div>
                 </div>
-            </header>
+            )}
 
             <div className="pi-dashboard-grid">
                 {/* 1. Health Analytics Column */}

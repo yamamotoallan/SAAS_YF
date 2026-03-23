@@ -1,0 +1,45 @@
+.wrapper-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0px;
+}
+
+.wrapper-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+}
+
+.wrapper-tab:hover {
+    color: var(--color-text);
+    background: var(--color-bg-hover);
+}
+
+.wrapper-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.wrapper-content {
+    animation: fade-in 0.3s ease;
+}
+
+/* Hide original headers when inside wrapper */
+.is-wrapper .page-header {
+    display: none !important;
+}
+
+.is-wrapper {
+    padding-top: 0 !important;
+}

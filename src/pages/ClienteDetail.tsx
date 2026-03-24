@@ -6,6 +6,7 @@ import {
     Layers, CheckCircle2, XCircle, Trophy, Calendar,
     Loader2, AlertCircle
 } from 'lucide-react';
+import { useToast } from '../components/Layout/ToastContext';
 import { api } from '../services/api';
 import './ClienteDetail.css';
 
@@ -27,24 +28,32 @@ const statusBadge = (s: string) => {
 
 // ── Component ─────────────────────────────────────────────────────────────
 const ClienteDetail = () => {
-    const { id } = useParams<{ id: string }>();
+    const { id } = useParams();
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     const [client, setClient] = useState<any>(null);
     const [deals, setDeals] = useState<any[]>([]);
+    const [intelligence, setIntelligence] = useState<any>(null);
+    const [alerts, setAlerts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'overview' | 'deals' | 'alerts'>('overview');
 
     useEffect(() => {
         if (!id) return;
         const load = async () => {
             try {
-                const [clientData, allItems] = await Promise.all([
+                const [clientData, allItems, intelData, alertsData] = await Promise.all([
                     api.clients.get(id),
                     api.items.list({ clientId: id }),
+                    api.clients.intelligence(id),
+                    api.alerts.list({ clientId: id })
                 ]);
                 setClient(clientData);
                 setDeals(Array.isArray(allItems) ? allItems : []);
+                setIntelligence(intelData);
+                setAlerts(Array.isArray(alertsData) ? alertsData : (alertsData as any).data || []);
             } catch (e: any) {
                 setError(e.message || 'Erro ao carregar cliente');
             } finally {
@@ -133,49 +142,101 @@ const ClienteDetail = () => {
                 <div className="cd-type-badge">{client.type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}</div>
             </div>
 
-            {/* ── KPI row ────────────────────────────────────────────── */}
-            <div className="cd-kpi-row">
-                <div className="cd-kpi-card">
-                    <div className="cd-kpi-icon kpi-green"><DollarSign size={20} /></div>
-                    <div>
-                        <div className="cd-kpi-value">{fmtBRL(ltv)}</div>
-                        <div className="cd-kpi-label">LTV (receita ganha)</div>
-                    </div>
-                </div>
-                <div className="cd-kpi-card">
-                    <div className="cd-kpi-icon kpi-blue"><Trophy size={20} /></div>
-                    <div>
-                        <div className="cd-kpi-value">{winRate}%</div>
-                        <div className="cd-kpi-label">Win Rate ({won.length}W / {lost.length}L)</div>
-                    </div>
-                </div>
-                <div className="cd-kpi-card">
-                    <div className="cd-kpi-icon kpi-indigo"><Layers size={20} /></div>
-                    <div>
-                        <div className="cd-kpi-value">{active.length}</div>
-                        <div className="cd-kpi-label">Negócios ativos</div>
-                    </div>
-                </div>
-                <div className="cd-kpi-card">
-                    <div className={`cd-kpi-icon ${daysSinceLast !== null && daysSinceLast > 30 ? 'kpi-orange' : 'kpi-slate'}`}>
-                        <Clock size={20} />
-                    </div>
-                    <div>
-                        <div className="cd-kpi-value">
-                            {daysSinceLast === null ? '—' : `${daysSinceLast}d`}
-                        </div>
-                        <div className="cd-kpi-label">
-                            Dias sem atividade
-                            {daysSinceLast !== null && daysSinceLast > 30 && (
-                                <span className="cd-kpi-warn"> ⚠ frio</span>
-                            )}
-                        </div>
-                    </div>
-                </div>
+            {/* ── Tabs ────────────────────────────────────────────────── */}
+            <div className="tabs mb-lg">
+                <button className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+                    Visão Geral
+                </button>
+                <button className={`tab-btn ${activeTab === 'deals' ? 'active' : ''}`} onClick={() => setActiveTab('deals')}>
+                    Histórico de Negócios
+                </button>
+                <button className={`tab-btn ${activeTab === 'alerts' ? 'active' : ''}`} onClick={() => setActiveTab('alerts')}>
+                    Alertas {alerts.length > 0 && <span className="badge badge-danger ml-2">{alerts.length}</span>}
+                </button>
             </div>
 
+            {/* ── Health Score ─────────────────────────────────────────── */}
+            {activeTab === 'overview' && intelligence && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-lg">
+                    <div className="card intelligence-card">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-h3">Saúde do Cliente</h3>
+                            <div className={`health-score-ring ${intelligence.healthScore > 70 ? 'good' : intelligence.healthScore > 40 ? 'warning' : 'danger'}`}>
+                                {intelligence.healthScore}%
+                            </div>
+                        </div>
+                        <div className="churn-risk">
+                            <span className="text-small text-muted uppercase font-bold">Risco de Churn:</span>
+                            <span className={`risk-label ${intelligence.churnRisk}`}>{intelligence.churnRisk === 'low' ? 'Baixo' : intelligence.churnRisk === 'medium' ? 'Médio' : 'Alto'}</span>
+                        </div>
+                        <p className="text-caption mt-4">Calculado com base na frequência de contatos e abertura de novos negócios nos últimos {intelligence.daysSinceLastActivity} dias.</p>
+                    </div>
+
+                    <div className="card intelligence-card">
+                        <h3 className="text-h3 mb-4">Potencial de Expansão</h3>
+                        <div className="expansion-metrics">
+                            <div className="metric-item">
+                                <span className="label">LTV Projetado</span>
+                                <span className="value">{fmtBRL(intelligence.ltv * 1.2)}</span>
+                            </div>
+                            <div className="metric-item">
+                                <span className="label">Oportunidades</span>
+                                <span className="value">{active.length}</span>
+                            </div>
+                        </div>
+                        <button className="btn btn-secondary btn-full mt-4" onClick={() => toast('Análise preditiva gerada!', 'success')}>
+                            Gerar Relatório de Inteligência
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── KPI row ────────────────────────────────────────────── */}
+            {activeTab === 'overview' && (
+                <div className="cd-kpi-row">
+                    <div className="cd-kpi-card">
+                        <div className="cd-kpi-icon kpi-green"><DollarSign size={20} /></div>
+                        <div>
+                            <div className="cd-kpi-value">{fmtBRL(ltv)}</div>
+                            <div className="cd-kpi-label">LTV (receita ganha)</div>
+                        </div>
+                    </div>
+                    <div className="cd-kpi-card">
+                        <div className="cd-kpi-icon kpi-blue"><Trophy size={20} /></div>
+                        <div>
+                            <div className="cd-kpi-value">{winRate}%</div>
+                            <div className="cd-kpi-label">Win Rate ({won.length}W / {lost.length}L)</div>
+                        </div>
+                    </div>
+                    <div className="cd-kpi-card">
+                        <div className="cd-kpi-icon kpi-indigo"><Layers size={20} /></div>
+                        <div>
+                            <div className="cd-kpi-value">{active.length}</div>
+                            <div className="cd-kpi-label">Negócios ativos</div>
+                        </div>
+                    </div>
+                    <div className="cd-kpi-card">
+                        <div className={`cd-kpi-icon ${daysSinceLast !== null && daysSinceLast > 30 ? 'kpi-orange' : 'kpi-slate'}`}>
+                            <Clock size={20} />
+                        </div>
+                        <div>
+                            <div className="cd-kpi-value">
+                                {daysSinceLast === null ? '—' : `${daysSinceLast}d`}
+                            </div>
+                            <div className="cd-kpi-label">
+                                Dias sem atividade
+                                {daysSinceLast !== null && daysSinceLast > 30 && (
+                                    <span className="cd-kpi-warn"> ⚠ frio</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ── Deal timeline ───────────────────────────────────────── */}
-            <div className="cd-section">
+            {activeTab === 'deals' && (
+                <div className="cd-section">
                 <h2 className="cd-section-title">
                     <TrendingUp size={18} /> Histórico de Negócios
                     <span className="cd-section-count">{deals.length}</span>
@@ -231,6 +292,42 @@ const ClienteDetail = () => {
                     </div>
                 )}
             </div>
+            )}
+
+            {/* ── Alertas Tab ────────────────────────────────────────── */}
+            {activeTab === 'alerts' && (
+                <div className="cd-section">
+                    <h2 className="cd-section-title">
+                        <AlertCircle size={18} /> Alertas Ativos
+                        <span className="cd-section-count">{alerts.length}</span>
+                    </h2>
+                    {alerts.length === 0 ? (
+                        <div className="cd-empty">
+                            <CheckCircle2 size={36} className="text-success" />
+                            <p>Nenhum alerta pendente para este cliente.</p>
+                        </div>
+                    ) : (
+                        <div className="cd-alerts-list">
+                            {alerts.map(alert => (
+                                <div key={alert.id} className="cd-alert-item card border-left-danger">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold">{alert.title}</h4>
+                                            <p className="text-sm text-muted mt-1">{alert.description}</p>
+                                            <div className="flex gap-4 mt-2 text-caption">
+                                                <span>Gravidade: <span className="font-bold uppercase">{alert.severity}</span></span>
+                                                <span>•</span>
+                                                <span>Data: {new Date(alert.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                        <Link to="/inteligencia" className="btn btn-secondary btn-xs">Ver Central</Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* ── Quick stats footer ──────────────────────────────────── */}
             <div className="cd-footer-stats">

@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { api } from '../../services/api';
 
 import {
     LayoutDashboard,
@@ -8,7 +10,8 @@ import {
     LogOut,
     Target,
     Brain,
-    Layers
+    Layers,
+    Shield
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -20,10 +23,23 @@ const getInitials = (name: string) => {
 };
 
 const Sidebar = () => {
+    const [company, setCompany] = useState<any>(null);
     const user = (() => {
         try { return JSON.parse(localStorage.getItem('yf_user') || '{}'); }
         catch { return {}; }
     })();
+
+    useEffect(() => {
+        const loadCompany = async () => {
+            try {
+                const data = await api.company.get();
+                setCompany(data);
+            } catch (error) {
+                console.error('Failed to load company branding', error);
+            }
+        };
+        loadCompany();
+    }, []);
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
@@ -33,6 +49,7 @@ const Sidebar = () => {
         { icon: Wallet, label: 'Financeiro', path: '/financeiro' },
         { icon: Users, label: 'Clientes', path: '/clientes' },
         { icon: Users, label: 'Pessoas', path: '/pessoas' },
+        { icon: Shield, label: 'Auditoria', path: '/auditoria' },
         { icon: Settings, label: 'Configurações', path: '/config' },
     ];
 
@@ -44,8 +61,12 @@ const Sidebar = () => {
         <aside className="sidebar">
             <div className="sidebar-header">
                 <div className="logo">
-                    <span className="logo-icon">YF</span>
-                    <span className="logo-text">Consultoria</span>
+                    {company?.logoUrl ? (
+                        <img src={company.logoUrl} alt="Logo" className="company-logo-img" />
+                    ) : (
+                        <span className="logo-icon">YF</span>
+                    )}
+                    <span className="logo-text">{company?.name || 'Consultoria'}</span>
                 </div>
             </div>
 
@@ -59,7 +80,6 @@ const Sidebar = () => {
                     >
                         <item.icon size={20} />
                         <span className="nav-label">{item.label}</span>
-                        {/* Only keeping badge functionality commented out if needed later, but removing 'badge' property reads since we removed it from the list */}
                     </NavLink>
                 ))}
             </nav>

@@ -610,7 +610,7 @@ const Metas = ({ isWrapper = false }: { isWrapper?: boolean }) => {
             {/* Create Goal Modal */}
             {showModal && (
                 <div className="modal-overlay" onClick={(e: React.MouseEvent) => e.target === e.currentTarget && setShowModal(false)}>
-                    <div className="modal w-full max-w-2xl">
+                    <div className="modal-content w-full max-w-2xl">
                         <div className="modal-header">
                             <h3>Nova Meta</h3>
                             <button className="icon-btn" onClick={() => setShowModal(false)}>×</button>

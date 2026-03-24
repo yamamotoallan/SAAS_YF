@@ -198,8 +198,8 @@ export const api = {
         },
         create: (data: Partial<Alert>) =>
             request<Alert>('/alerts', { method: 'POST', body: JSON.stringify(data) }),
-        resolve: (id: string) =>
-            request<Alert>(`/alerts/${id}/resolve`, { method: 'PATCH' }),
+        resolve: (id: string, data?: any) =>
+            request<Alert>(`/alerts/${id}/resolve`, { method: 'PATCH', body: data ? JSON.stringify(data) : undefined }),
         dismiss: (id: string) =>
             request<Alert>(`/alerts/${id}/dismiss`, { method: 'PATCH' }),
         delete: (id: string) =>

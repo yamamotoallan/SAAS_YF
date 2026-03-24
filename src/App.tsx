@@ -11,6 +11,7 @@ import ClienteDetail from './pages/ClienteDetail';
 import Performance from './pages/Performance';
 import Inteligencia from './pages/Inteligencia';
 import Operacoes from './pages/Operacoes';
+import Auditoria from './pages/Auditoria';
 import { Navigate } from 'react-router-dom';
 
 import PrivateRoute from './components/Layout/PrivateRoute';
@@ -37,6 +38,7 @@ function App() {
             <Route path="clientes" element={<Clientes />} />
             <Route path="clientes/:id" element={<ClienteDetail />} />
             <Route path="config" element={<Config />} />
+            <Route path="auditoria" element={<Auditoria />} />
 
             {/* Redirects for merged/old routes */}
             <Route path="kpis" element={<Navigate to="/performance" replace />} />

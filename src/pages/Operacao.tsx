@@ -196,14 +196,16 @@ const Operacao = ({ isWrapper = false }: { isWrapper?: boolean }) => {
 
                                         <div className="stage-bar-container">
                                             <div className="stage-metrics">
-                                                <span className="sla-tag">SLA: {stage.sla}d</span>
-                                                <span className={`load-tag ${load > 100 ? 'overload' : ''}`}>
+                                                <span className={`sla-tag ${stage.avgTime > stage.sla ? 'text-danger' : ''}`}>
+                                                    SLA: {stage.sla}d (Atual: {stage.avgTime}d)
+                                                </span>
+                                                <span className={`load-tag ${load > 100 ? 'overload' : load > 80 ? 'warning' : ''}`}>
                                                     Carga: {Math.round(load)}%
                                                 </span>
                                             </div>
                                             <div className="stage-progress">
                                                 <div
-                                                    className={`progress-fill ${isBottleneck ? 'danger' : 'primary'}`}
+                                                    className={`progress-fill ${load > 100 ? 'danger' : load > 80 ? 'warning' : 'primary'}`}
                                                     style={{ width: `${Math.min(load, 100)}%` }}
                                                 ></div>
                                             </div>

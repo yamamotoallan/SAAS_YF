@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     CheckCircle, XCircle, Plus, Activity,
     BrainCircuit, DollarSign, Users, Clock, Zap,
-    ChevronDown, ChevronRight, Bell, Settings2, RefreshCw, Shield
+    ChevronDown, ChevronRight, Bell, Settings2, RefreshCw, Shield, ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api';
 import type { Alert } from '../types/api';
@@ -99,6 +99,9 @@ const Alertas = ({ isWrapper = false }: { isWrapper?: boolean }) => {
         title: '', description: '', type: 'operational' as Alert['type'], priority: 'medium' as Alert['priority'],
     });
 
+    const [resolvingAlert, setResolvingAlert] = useState<any | null>(null);
+    const [treatmentNote, setTreatmentNote] = useState('');
+
     // Toast
     const [toast, setToast] = useState<string | null>(null);
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
@@ -187,10 +190,25 @@ const Alertas = ({ isWrapper = false }: { isWrapper?: boolean }) => {
         }
     };
 
-    const handleResolve = async (id: string, e: React.MouseEvent) => {
+    const handleResolve = (alert: any, e: React.MouseEvent) => {
         e.stopPropagation();
-        await api.alerts.resolve(id);
-        setAlerts(prev => prev.filter(a => a.id !== id));
+        setResolvingAlert(alert);
+        setTreatmentNote('');
+    };
+
+    const confirmResolve = async () => {
+        if (!resolvingAlert) return;
+        setSubmitting(true);
+        try {
+            await api.alerts.resolve(resolvingAlert.id, { treatment: treatmentNote });
+            setAlerts(prev => prev.filter(a => a.id !== resolvingAlert.id));
+            setResolvingAlert(null);
+            showToast('Alerta resolvido com sucesso');
+        } catch (e) {
+            showToast('Erro ao resolver alerta');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const handleDismiss = async (id: string, e: React.MouseEvent) => {
@@ -329,7 +347,26 @@ const Alertas = ({ isWrapper = false }: { isWrapper?: boolean }) => {
                                             </div>
                                             {activeTab === 'active' && (
                                                 <div className="alert-actions">
-                                                    <button className="btn-icon-action success" title="Resolver" onClick={e => handleResolve(alert.id, e)}>
+                                                    {alert.source === 'auto' && alert.type && (
+                                                        <button
+                                                            className="btn-icon-action info"
+                                                            title="Ver Origem"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const pathMap: Record<string, string> = {
+                                                                    financial: '/financeiro',
+                                                                    kpi: '/kpis',
+                                                                    people: '/pessoas',
+                                                                    operational: '/operacoes',
+                                                                };
+                                                                const path = pathMap[alert.type] || '/dashboard';
+                                                                window.open(path, '_self');
+                                                            }}
+                                                        >
+                                                            <ExternalLink size={18} />
+                                                        </button>
+                                                    )}
+                                                    <button className="btn-icon-action success" title="Resolver" onClick={e => handleResolve(alert, e)}>
                                                         <CheckCircle size={18} />
                                                     </button>
                                                     <button className="btn-icon-action danger" title="Ignorar" onClick={e => handleDismiss(alert.id, e)}>
@@ -429,6 +466,40 @@ const Alertas = ({ isWrapper = false }: { isWrapper?: boolean }) => {
                         </select>
                     </div>
                 </form>
+            </Modal>
+
+            {/* ── Resolve Modal ────────────────────────────────────────── */}
+            <Modal
+                isOpen={!!resolvingAlert}
+                onClose={() => setResolvingAlert(null)}
+                title="Resolver Alerta"
+                footer={
+                    <>
+                        <button className="btn btn-secondary" onClick={() => setResolvingAlert(null)}>Cancelar</button>
+                        <button className="btn btn-primary" onClick={confirmResolve} disabled={submitting || !treatmentNote.trim()}>
+                            {submitting ? 'Resolvendo...' : 'Confirmar Resolução'}
+                        </button>
+                    </>
+                }
+            >
+                <div className="p-1">
+                    <p className="text-small mb-4">
+                        <b>Alerta:</b> {resolvingAlert?.title}<br />
+                        <b>Descrição:</b> {resolvingAlert?.description}
+                    </p>
+                    <div className="form-group">
+                        <label className="label">Tratativa / Ação Tomada *</label>
+                        <textarea
+                            className="input-field"
+                            rows={4}
+                            placeholder="Descreva o que foi feito para resolver este problema..."
+                            value={treatmentNote}
+                            onChange={e => setTreatmentNote(e.target.value)}
+                            autoFocus
+                            required
+                        />
+                    </div>
+                </div>
             </Modal>
         </div>
     );

@@ -104,6 +104,7 @@ const Config = () => {
     // Company
     const [company, setCompany] = useState<any>({
         name: '', cnpj: '', segment: '', size: 'small', revenue: 0, headcount: 0,
+        logoUrl: '', primaryColor: '#6366f1',
         financialTargets: { revenue: 0, margin: 0, pipeline: 0, expenses: 0 },
         settings: {
             sla: 24,
@@ -293,6 +294,25 @@ const Config = () => {
                                 <input type="number" className="input-field" min="0"
                                     value={company.headcount || 0}
                                     onChange={e => setCompany({ ...company, headcount: Number(e.target.value) })} />
+                            </FieldGroup>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FieldGroup label="Logo URL" hint="Link para a imagem da logomarca">
+                                <input type="text" className="input-field"
+                                    placeholder="https://exemplo.com/logo.png"
+                                    value={company.logoUrl || ''}
+                                    onChange={e => setCompany({ ...company, logoUrl: e.target.value })} />
+                            </FieldGroup>
+                            <FieldGroup label="Cor Primária" hint="Cor de destaque da marca">
+                                <div className="flex gap-2">
+                                    <input type="color" className="input-field p-1" style={{ width: '40px' }}
+                                        value={company.primaryColor || '#6366f1'}
+                                        onChange={e => setCompany({ ...company, primaryColor: e.target.value })} />
+                                    <input type="text" className="input-field flex-1"
+                                        placeholder="#6366f1"
+                                        value={company.primaryColor || '#6366f1'}
+                                        onChange={e => setCompany({ ...company, primaryColor: e.target.value })} />
+                                </div>
                             </FieldGroup>
                         </div>
                     </div>

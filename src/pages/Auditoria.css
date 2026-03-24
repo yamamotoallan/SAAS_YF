@@ -1,0 +1,150 @@
+.audit-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.audit-search-row {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+}
+
+.audit-search-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0 1rem;
+    color: var(--color-text-secondary);
+}
+
+.audit-search-input input {
+    width: 100%;
+    height: 48px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+}
+
+.audit-search-input input:focus {
+    outline: none;
+}
+
+.audit-filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    padding-top: 1.5rem;
+}
+
+.audit-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.audit-filter label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+}
+
+.audit-filter select,
+.audit-filter input {
+    height: 40px;
+    padding: 0 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.audit-filter select:focus,
+.audit-filter input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.audit-table th {
+    background: var(--color-bg-alt);
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.audit-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.audit-table tr:hover {
+    background: var(--color-bg-hover);
+}
+
+.user-avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.module-badge {
+    padding: 0.25rem 0.625rem;
+    border-radius: 99px;
+    background: var(--color-bg-alt);
+    color: var(--color-text-secondary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+}
+
+.entity-name {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+}
+
+.footer-pagination {
+    margin-top: 2rem;
+    padding-bottom: 3rem;
+    display: flex;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .audit-filters-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .audit-filter select, 
+    .audit-filter input {
+        width: 100%;
+    }
+}

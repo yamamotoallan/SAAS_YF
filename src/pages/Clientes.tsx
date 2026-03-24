@@ -2,15 +2,14 @@ import { useState, useEffect } from 'react';
 import {
     Plus,
     Search,
-    Filter,
     MoreVertical,
     Phone,
     Mail,
     Building2,
     User,
-    ExternalLink,
     Trash2,
-    Download
+    Download,
+    ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -33,6 +32,7 @@ const Clientes = () => {
     const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'prospect'>('all');
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     // Form State
@@ -49,7 +49,7 @@ const Clientes = () => {
 
     useEffect(() => {
         loadClients();
-    }, [page, searchTerm]);
+    }, [page, searchTerm, statusFilter]);
 
     const loadClients = async () => {
         try {
@@ -57,6 +57,7 @@ const Clientes = () => {
             const res = await api.clients.list({
                 page: page.toString(),
                 search: searchTerm,
+                status: statusFilter === 'all' ? '' : statusFilter,
                 limit: '12' // 3 columns x 4 rows approx
             });
             setClients(res.data);
@@ -143,9 +144,24 @@ const Clientes = () => {
                     />
                 </div>
                 <div className="filters">
-                    <button className="btn-icon"><Filter size={16} /></button>
-                    <button className="btn-text">Ativos</button>
-                    <button className="btn-text">Prospects</button>
+                    <button 
+                        className={`btn-text ${statusFilter === 'all' ? 'active' : ''}`}
+                        onClick={() => { setStatusFilter('all'); setPage(1); }}
+                    >
+                        Todos
+                    </button>
+                    <button 
+                        className={`btn-text ${statusFilter === 'active' ? 'active' : ''}`}
+                        onClick={() => { setStatusFilter('active'); setPage(1); }}
+                    >
+                        Ativos
+                    </button>
+                    <button 
+                        className={`btn-text ${statusFilter === 'prospect' ? 'active' : ''}`}
+                        onClick={() => { setStatusFilter('prospect'); setPage(1); }}
+                    >
+                        Prospects
+                    </button>
                 </div>
             </div>
 

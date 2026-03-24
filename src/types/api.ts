@@ -28,6 +28,8 @@ export interface Company {
     size?: string;
     revenue?: number;
     headcount?: number;
+    logoUrl?: string;
+    primaryColor?: string;
     financialTargets?: {
         revenue?: number;
         margin?: number;

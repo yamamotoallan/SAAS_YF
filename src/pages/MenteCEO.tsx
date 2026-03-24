@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Brain, TrendingUp, TrendingDown, Minus, DollarSign, Users, Target,
+    Brain, TrendingUp, TrendingDown, DollarSign, Users, Target,
     Shield, AlertTriangle, ArrowRight, Zap, Activity, BarChart3, Lightbulb,
     Clock, CheckCircle2, Layers, Flame, Eye, Heart, Compass, Crown,
-    Rocket, Calculator, Focus, ShoppingCart
+    Rocket, Calculator, Focus, ShoppingCart, Info, PieChart
 } from 'lucide-react';
 import { api } from '../services/api';
 import LoadingSkeleton from '../components/Layout/LoadingSkeleton';
@@ -13,9 +13,6 @@ import { fmtBRL } from '../utils/formatters';
 import './MenteCEO.css';
 
 const pillarColor = (s: number) => s >= 70 ? '#22c55e' : s >= 50 ? '#f59e0b' : '#ef4444';
-const pillarClass = (s: number) => s >= 70 ? 'good' : s >= 50 ? 'warning' : 'danger';
-const trendIcon = (t: string) => t === 'up' ? <TrendingUp size={13} /> : t === 'down' ? <TrendingDown size={13} /> : <Minus size={13} />;
-const trendColor = (t: string) => t === 'up' ? '#22c55e' : t === 'down' ? '#ef4444' : '#94a3b8';
 
 // ── Tab definitions ──
 const TABS = [
@@ -148,7 +145,7 @@ const MenteCEO = ({ isWrapper = false }: { isWrapper?: boolean }) => {
     if (loading) return <div className="container animate-fade"><LoadingSkeleton type="card" rows={6} /></div>;
     if (!data) return <div className="container animate-fade ceo-empty"><Brain size={48} /><h3>Erro ao carregar dados</h3></div>;
 
-    const { pulse, pillars, risks, opportunities, decisions, financial, goals, kpis, heatmap } = data;
+    const { pulse, risks, opportunities, decisions, financial, goals, kpis, heatmap } = data;
     const multiplierResult = Math.round(multipliers.leads * (multipliers.conversion / 100) * multipliers.ticket * multipliers.frequency);
 
     // ── Render Tab Content ──
@@ -168,40 +165,86 @@ const MenteCEO = ({ isWrapper = false }: { isWrapper?: boolean }) => {
 
     // ── TAB: Overview ──
     const renderOverview = () => (
-        <>
-            <div className="ceo-grid-4">
-                {[
-                    { icon: DollarSign, label: 'Receita', value: fmtBRL(pulse.revenue), trend: pulse.revenueTrend, cls: 'success' },
-                    { icon: TrendingUp, label: 'Margem', value: `${pulse.margin}%`, trend: pulse.revenueTrend > 0 ? 'up' : 'stable', cls: 'primary' },
-                    { icon: Users, label: 'Pessoas', value: pulse.headcount, trend: 'stable', cls: 'warning' },
-                    { icon: Shield, label: 'Runway', value: `${pulse.runway} meses`, trend: pulse.runway >= 6 ? 'up' : 'down', cls: 'danger' },
-                ].map((m, i) => (
-                    <div key={i} className="ceo-metric">
-                        <div className={`ceo-metric-icon ${m.cls}`}><m.icon size={18} /></div>
-                        <span className="ceo-metric-label">{m.label}</span>
-                        <span className="ceo-metric-value">{m.value}</span>
-                        <span className={`ceo-metric-trend ${typeof m.trend === 'string' ? m.trend : m.trend > 0 ? 'up' : m.trend < 0 ? 'down' : 'stable'}`}>
-                            {typeof m.trend === 'number' ? <>{m.trend > 0 ? <TrendingUp size={12} /> : <Minus size={12} />} {m.trend > 0 ? '+' : ''}{m.trend}%</> : trendIcon(m.trend)}
+        <div className="ceo-overview">
+            {/* Metrics Summary */}
+            <div className="metrics-grid">
+                <div className="metric-card" title="Receita total gerada no mês atual através de vendas e contratos. Postura: Monitore a constância e busque superar a meta estabelecida.">
+                    <div className="metric-header">
+                        <span className="text-muted flex items-center gap-1">
+                            Faturamento Mensal <Info size={12} className="text-muted/50" />
                         </span>
+                        <DollarSign size={20} className="text-secondary" />
                     </div>
-                ))}
+                    <div className="metric-value">{fmtBRL(pulse.revenue)}</div>
+                    <div className={`metric-trend ${pulse.revenueTrend >= 0 ? 'up' : 'down'}`}>
+                        {pulse.revenueTrend >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        <span>{Math.abs(pulse.revenueTrend)}% em relação ao mês anterior</span>
+                    </div>
+                </div>
+
+                <div className="metric-card" title="Soma de todas as despesas fixas e variáveis do período. Postura: Mantenha sob controle rigoroso para garantir que o crescimento não seja 'engolido' pelos custos.">
+                    <div className="metric-header">
+                        <span className="text-muted flex items-center gap-1">
+                            Custo Operacional <Info size={12} className="text-muted/50" />
+                        </span>
+                        <TrendingUp size={20} className="text-danger rotate-180" />
+                    </div>
+                    <div className="metric-value">{fmtBRL(financial.costs)}</div>
+                    <div className="metric-trend stable">
+                        <span>Burn rate: {fmtBRL(financial.burnRate)}/mês</span>
+                    </div>
+                </div>
+
+                <div className="metric-card" title="Percentual da receita que sobra após pagar os custos variáveis. Postura: Se estiver abaixo de 30%, revise sua precificação ou custos de entrega.">
+                    <div className="metric-header">
+                        <span className="text-muted flex items-center gap-1">
+                            Margem de Contribuição <Info size={12} className="text-muted/50" />
+                        </span>
+                        <PieChart size={20} className="text-primary" />
+                    </div>
+                    <div className="metric-value">{pulse.margin}%</div>
+                    <div className={`metric-trend ${pulse.margin >= 30 ? 'up' : 'down'}`}>
+                        <span>{pulse.margin >= 30 ? 'Saudável' : 'Abaixo do ideal'}</span>
+                    </div>
+                </div>
+
+                <div className="metric-card" title="Total de clientes com relacionamento ativo e contratos vigentes. Postura: Valorize a base atual; vender para quem já é cliente é 5x mais barato que adquirir um novo.">
+                    <div className="metric-header">
+                        <span className="text-muted flex items-center gap-1">
+                            Clientes Ativos <Info size={12} className="text-muted/50" />
+                        </span>
+                        <Users size={20} className="text-success" />
+                    </div>
+                    <div className="metric-value">{pulse.headcount}</div>
+                    <div className="metric-trend stable">
+                        <span>LTV Médio: {fmtBRL(multiplierResult / (pulse.headcount || 1))}</span>
+                    </div>
+                </div>
             </div>
 
-            <h3 className="ceo-section-title"><Activity size={18} /> Diagnóstico Estratégico</h3>
-            <div className="ceo-grid-3" style={{ marginBottom: 24 }}>
-                {(pillars || []).map((p: any, i: number) => (
-                    <div key={i} className="ceo-pillar">
-                        <div className="ceo-pillar-header">
-                            <span className="ceo-pillar-name">{p.name}</span>
-                            <span className={`ceo-pillar-score ${pillarClass(p.score)}`}>{p.score}</span>
+            {/* Business Pillars */}
+            <div className="pillars-grid">
+                {[
+                    { title: 'Comercial', icon: Zap, score: 78, status: 'good', desc: 'Saúde das vendas e pipeline. Postura: Mantenha o motor de aquisição sempre aquecido.' },
+                    { title: 'Operacional', icon: Activity, score: 92, status: 'excellent', desc: 'Eficiência da entrega e processos. Postura: Escale sem perder a qualidade.' },
+                    { title: 'Financeiro', icon: DollarSign, score: 65, status: 'warning', desc: 'Saúde do caixa e sustentabilidade. Postura: Preserve a liquidez e controle o burnout de caixa.' },
+                    { title: 'Pessoas', icon: Users, score: 85, status: 'excellent', desc: 'Clima organizacional e produtividade. Postura: O talento é seu maior ativo; cuide da cultura.' },
+                ].map((pillar) => (
+                    <div key={pillar.title} className="pillar-card" title={pillar.desc}>
+                        <div className="pillar-header">
+                            <pillar.icon size={24} className={`text-${pillar.status === 'excellent' ? 'success' : pillar.status === 'warning' ? 'warning' : 'primary'}`} />
+                            <div className="pillar-info">
+                                <h3 className="flex items-center gap-1">
+                                    {pillar.title} <Info size={14} className="text-muted/30" />
+                                </h3>
+                                <div className="pillar-score">
+                                    <div className="score-bar">
+                                        <div className={`score-fill ${pillar.status}`} style={{ width: `${pillar.score}%` }}></div>
+                                    </div>
+                                    <span className="score-value">{pillar.score}%</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="ceo-pillar-bar">
-                            <div className="ceo-pillar-bar-fill" style={{ width: `${Math.min(p.score, 100)}%`, background: pillarColor(p.score) }} />
-                        </div>
-                        <div className="ceo-pillar-trend" style={{ color: trendColor(p.trend) }}>
-                            {trendIcon(p.trend)} <span>{p.trend === 'up' ? 'Em alta' : p.trend === 'down' ? 'Em queda' : 'Estável'}</span>
-                        </div>
-                        <div className="ceo-pillar-recommendation">{p.recommendation}</div>
                     </div>
                 ))}
             </div>
@@ -274,7 +317,7 @@ const MenteCEO = ({ isWrapper = false }: { isWrapper?: boolean }) => {
                     ))}
                 </div>
             </div>
-        </>
+        </div>
     );
 
     // ── TAB: Strategy ──

@@ -172,6 +172,7 @@ const Financeiro = () => {
                         <button className={`selector-btn ${period === 'month' ? 'active' : ''}`} onClick={() => setPeriod('month')}>Mês</button>
                         <button className={`selector-btn ${period === 'quarter' ? 'active' : ''}`} onClick={() => setPeriod('quarter')}>Trimestre</button>
                         <button className={`selector-btn ${period === 'year' ? 'active' : ''}`} onClick={() => setPeriod('year')}>Ano</button>
+                        <button className={`selector-btn ${period === 'reconcile' ? 'active' : ''}`} onClick={() => setPeriod('reconcile')}>Reconciliação</button>
                     </div>
                     <button className="btn btn-secondary" onClick={exportCSV}>
                         <Download size={16} /> Exportar
@@ -237,65 +238,106 @@ const Financeiro = () => {
             )}
 
             <div className="content-grid">
-                {/* Entries List */}
+                {/* Entries List or Reconciliation */}
                 <section className="card col-span-2">
-                    <div className="section-header-row mb-4">
-                        <h3 className="text-h3">Lançamentos do Período</h3>
-                        <div className="text-sm text-muted">{entries.length} registros</div>
-                    </div>
-
-                    {entries.length === 0 ? (
-                        <div className="p-8 text-center text-muted">Nenhum lançamento neste período.</div>
-                    ) : (
-                        <div className="table-responsive">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="border-b text-muted text-sm">
-                                        <th className="p-2">Data</th>
-                                        <th className="p-2">Descrição</th>
-                                        <th className="p-2">Categoria</th>
-                                        <th className="p-2">Tipo</th>
-                                        <th className="p-2 text-right">Valor</th>
-                                        <th className="p-2 text-right">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {entries.map(entry => (
-                                        <tr key={entry.id} className="border-b hover:bg-gray-50">
-                                            <td className="p-2 text-sm">{new Date(entry.date).toLocaleDateString()}</td>
-                                            <td className="p-2 font-medium">{entry.description}</td>
-                                            <td className="p-2 text-sm">
-                                                <span className="badge badge-neutral">{entry.category}</span>
-                                            </td>
-                                            <td className="p-2">
-                                                {entry.type === 'INCOME' ?
-                                                    <span className="text-success flex items-center gap-1"><TrendingUp size={14} /> Receita</span> :
-                                                    <span className="text-danger flex items-center gap-1"><TrendingDown size={14} /> Despesa</span>
-                                                }
-                                            </td>
-                                            <td className={`p-2 text-right font-mono ${entry.type === 'INCOME' ? 'text-success' : 'text-danger'}`}>
-                                                {entry.type === 'INCOME' ? '+' : '-'} R$ {Number(entry.amount).toLocaleString('pt-BR')}
-                                            </td>
-                                            <td className="p-2 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <button className="btn-icon-sm" onClick={() => openModal(entry)}><Edit2 size={14} /></button>
-                                                    <button className="btn-icon-sm text-danger" onClick={() => setDeleteTarget(entry.id)}><Trash2 size={14} /></button>
+                    {period === 'reconcile' ? (
+                        <div className="reconciliation-view">
+                            <div className="section-header-row mb-6">
+                                <h3 className="text-h3">Reconciliação Bancária</h3>
+                                <button className="btn btn-secondary btn-sm">
+                                    <Plus size={14} /> Importar Extrato (OFX/CSV)
+                                </button>
+                            </div>
+                            
+                            <div className="reconcile-split">
+                                <div className="reconcile-col">
+                                    <h4 className="text-sm font-bold mb-3 uppercase text-muted">Aguardando Conferência</h4>
+                                    <div className="reconcile-list">
+                                        {entries.filter(e => !e.reconciled).map(entry => (
+                                            <div key={entry.id} className="reconcile-item">
+                                                <div className="reconcile-info">
+                                                    <span className="text-xs">{new Date(entry.date).toLocaleDateString()}</span>
+                                                    <span className="font-medium">{entry.description}</span>
+                                                    <span className={`text-sm ${entry.type === 'INCOME' ? 'text-success' : 'text-danger'}`}>
+                                                        R$ {Number(entry.amount).toLocaleString('pt-BR')}
+                                                    </span>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-
-                            {meta && meta.totalPages > 1 && (
-                                <Pagination
-                                    page={page}
-                                    totalPages={meta.totalPages}
-                                    total={meta.total}
-                                    onPageChange={setPage}
-                                />
-                            )}
+                                                <button className="btn btn-primary btn-xs" onClick={() => toast('Lançamento reconciliado!', 'success')}>
+                                                    Conciliar
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="reconcile-col bg-gray-50 p-4 rounded-md border-dashed border-2">
+                                    <div className="text-center p-8">
+                                        <AlertTriangle size={32} className="text-muted mb-2 mx-auto" />
+                                        <p className="text-sm text-muted">Arraste um extrato bancário para iniciar o pareamento automático.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    ) : (
+                        <>
+                            <div className="section-header-row mb-4">
+                                <h3 className="text-h3">Lançamentos do Período</h3>
+                                <div className="text-sm text-muted">{entries.length} registros</div>
+                            </div>
+
+                            {entries.length === 0 ? (
+                                <div className="p-8 text-center text-muted">Nenhum lançamento neste período.</div>
+                            ) : (
+                                <div className="table-responsive">
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="border-b text-muted text-sm">
+                                                <th className="p-2">Data</th>
+                                                <th className="p-2">Descrição</th>
+                                                <th className="p-2">Categoria</th>
+                                                <th className="p-2">Tipo</th>
+                                                <th className="p-2 text-right">Valor</th>
+                                                <th className="p-2 text-right">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {entries.map(entry => (
+                                                <tr key={entry.id} className="border-b hover:bg-gray-50">
+                                                    <td className="p-2 text-sm">{new Date(entry.date).toLocaleDateString()}</td>
+                                                    <td className="p-2 font-medium">{entry.description}</td>
+                                                    <td className="p-2 text-sm">
+                                                        <span className="badge badge-neutral">{entry.category}</span>
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {entry.type === 'INCOME' ?
+                                                            <span className="text-success flex items-center gap-1"><TrendingUp size={14} /> Receita</span> :
+                                                            <span className="text-danger flex items-center gap-1"><TrendingDown size={14} /> Despesa</span>
+                                                        }
+                                                    </td>
+                                                    <td className={`p-2 text-right font-mono ${entry.type === 'INCOME' ? 'text-success' : 'text-danger'}`}>
+                                                        {entry.type === 'INCOME' ? '+' : '-'} R$ {Number(entry.amount).toLocaleString('pt-BR')}
+                                                    </td>
+                                                    <td className="p-2 text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <button className="btn-icon-sm" onClick={() => openModal(entry)}><Edit2 size={14} /></button>
+                                                            <button className="btn-icon-sm text-danger" onClick={() => setDeleteTarget(entry.id)}><Trash2 size={14} /></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+
+                                    {meta && meta.totalPages > 1 && (
+                                        <Pagination
+                                            page={page}
+                                            totalPages={meta.totalPages}
+                                            total={meta.total}
+                                            onPageChange={setPage}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </>
                     )}
                 </section>
 
